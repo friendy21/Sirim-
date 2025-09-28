@@ -1,5 +1,27 @@
 # SIRIM QR Code Scanner
 
+## Project Structure
+
+The repository now contains a full multi-module Android application that implements the architecture described below. Key
+modules:
+
+- `app/` – Presentation layer built with Jetpack Compose and Hilt-powered navigation & screen view models.
+- `core/domain/` – Kotlin-only module with business entities, repositories, and use cases for the clean architecture domain
+  layer.
+- `core/data/` – Android library implementing repositories, Retrofit networking, DataStore token handling, and Room-backed
+  persistence abstractions.
+- `core/database/` – Room database module with DAOs, entities, and converters dedicated to local storage.
+- `core/network/` – Kotlin networking module with Retrofit DTOs and service definitions.
+- `core/common/` – Shared utilities such as coroutine dispatcher providers.
+
+Gradle is configured with Kotlin DSL files (`build.gradle.kts`) and Android Gradle Plugin 8.2.2. Use Android Studio Giraffe or
+newer to open the project, then sync Gradle and run the `app` configuration on a device/emulator running Android 10 (API 29) or
+higher. You can also build from the command line:
+
+```bash
+./gradlew assembleDebug
+```
+
 ## System Architecture and Technical Specifications
 
 ### 1. System Architecture

@@ -10,14 +10,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SirimRecordDao {
-    @Query("SELECT * FROM sirim_records ORDER BY updated_at DESC")
-    fun observeAll(): Flow<List<SirimRecordEntity>>
-
-    @Query("SELECT * FROM sirim_records WHERE id = :id")
-    suspend fun getById(id: Long): SirimRecordEntity?
-
-    @Query("SELECT * FROM sirim_records WHERE sirim_serial_no = :serial LIMIT 1")
-    suspend fun getBySerial(serial: String): SirimRecordEntity?
+    @Query("SELECT * FROM sirim_records ORDER BY created_at DESC")
+    fun observeRecords(): Flow<List<SirimRecordEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(record: SirimRecordEntity): Long
@@ -27,4 +21,10 @@ interface SirimRecordDao {
 
     @Delete
     suspend fun delete(record: SirimRecordEntity)
+
+    @Query("SELECT * FROM sirim_records WHERE sirim_serial_no = :serial LIMIT 1")
+    suspend fun findBySerial(serial: String): SirimRecordEntity?
+
+    @Query("SELECT * FROM sirim_records WHERE id = :id")
+    suspend fun findById(id: Long): SirimRecordEntity?
 }

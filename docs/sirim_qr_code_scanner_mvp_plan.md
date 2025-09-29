@@ -295,6 +295,64 @@ The project follows an **Agile Scrum** methodology optimized for Android 15 deve
 
 ---
 
+# Appendices
+
+## A. Product Backlog Overview
+
+The initial backlog is organized around customer value and technical dependencies to maintain momentum throughout the MVP delivery. Items are prioritized using the MoSCoW method and scoped to fit within two-week sprints.
+
+| Priority | Epic | User Story | Acceptance Criteria |
+| :--- | :--- | :--- | :--- |
+| Must | Authentication | "As a registered inspector, I want to securely sign in with biometrics so that I can unlock the scanner quickly." | Biometric prompt available after successful credential login, fallback PIN flow, lockout after 5 failed attempts |
+| Must | Scanning | "As an operator, I want to scan a SIRIM QR code in low light so that I can capture labels in warehouses." | CameraX preview with Low Light Boost, successful decode in < 2 seconds, manual flashlight toggle |
+| Must | Data Management | "As a compliance officer, I want to review a list of scanned products so that I can verify accuracy." | Paginated list with filters for date, serial number, and sync status |
+| Should | Export | "As a manager, I want to export selected records to PDF so that I can send audit reports." | Multi-select records, choose PDF template, share via Android share sheet |
+| Could | Sync | "As a supervisor, I want automatic nightly sync to the cloud so that records are backed up." | Configurable schedule, WorkManager job with exponential backoff, conflict report UI |
+
+## B. Testing Strategy
+
+Quality assurance follows a pyramid approach that leverages Android 15 testing improvements and continuous integration.
+
+1. **Unit Tests (70%)**
+   - Cover Use Cases, Repositories, and ViewModels using JUnit5 and MockK.
+   - Validate cryptographic helpers with instrumentation on Android 15 emulator to confirm Keystore interactions.
+2. **Instrumentation & UI Tests (20%)**
+   - Espresso + Compose Testing APIs for biometric prompts, camera permission dialogs, and navigation flows.
+   - CameraX tests leverage fake frames to validate Low Light Boost fallback logic without physical devices.
+3. **End-to-End & Performance Tests (10%)**
+   - Firebase Test Lab matrix covering flagship Android 15 devices and representative Android 13 hardware for backward compatibility.
+   - Measure scan-to-save latency (< 5 seconds) and export generation times (< 10 seconds for 500 records).
+4. **Security & Compliance Checks**
+   - OWASP Mobile Security Testing Guide (MSTG) checklist execution each release candidate.
+   - Dependency scanning via Gradle Versions Plugin and GitHub Dependabot alerts integrated into CI pipeline.
+
+## C. Risk Management Matrix
+
+| Risk | Impact | Likelihood | Mitigation Strategy | Contingency |
+| :--- | :--- | :--- | :--- | :--- |
+| OCR misreads due to damaged labels | High | Medium | Combine ML Kit barcode parsing with heuristic validation on SIRIM serial format | Allow manual data entry and flag record for supervisor review |
+| Regulatory change to QR label schema | Medium | Medium | Abstract parsing logic into configurable parser module with remote feature flags | Push hotfix update via Play Store and backend parser configuration |
+| Device storage limitations in offline-only deployments | Medium | Low | Implement record archiving and compression prior to export | Provide admin tooling to bulk delete archived records post-export |
+| Network instability during sync | High | Medium | Use WorkManager with resilient retry policy and partial batch uploads | Enable manual conflict resolution view and offline export as fallback |
+| Loss of device with sensitive data | High | Low | Enforce biometric auth, encrypted database, and remote wipe integration | Require password reset and revoke device tokens via admin console |
+
+## D. Deployment Checklist
+
+1. **Pre-Release**
+   - Verify versioning alignment across Android app, backend API, and documentation.
+   - Perform accessibility audit focusing on contrast ratios, TalkBack labels, and dynamic text sizing.
+   - Run Play Console pre-launch report on Android 15 reference devices.
+2. **Release**
+   - Sign application with Play App Signing and upload encrypted artifacts.
+   - Publish release notes detailing Android 15-specific capabilities and known limitations.
+   - Monitor crash-free sessions via Firebase Crashlytics with real-time alerts.
+3. **Post-Release**
+   - Conduct 48-hour hypercare with dedicated response channel for field inspectors.
+   - Schedule retrospective to feed insights into Sprint 7 backlog refinement.
+   - Archive release documentation in secure knowledge base with access controls.
+
+---
+
 **Document Version:** 2.0  
 **Last Updated:** September 29, 2025  
 **Next Review:** October 15, 2025

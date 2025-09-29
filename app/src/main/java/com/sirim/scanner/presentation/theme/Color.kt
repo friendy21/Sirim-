@@ -2,7 +2,7 @@ package com.sirim.scanner.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
-val PrimaryGreen = Color(0xFF006C4F)
-val SecondaryBlue = Color(0xFF005B82)
-val BackgroundGray = Color(0xFFF5F5F5)
-val SurfaceWhite = Color(0xFFFFFFFF)
+val PrimaryBlue = Color(0xFF0057B7)
+val SecondaryGold = Color(0xFFFFC20E)
+val DarkBackground = Color(0xFF101820)
+val LightBackground = Color(0xFFF5F5F5)

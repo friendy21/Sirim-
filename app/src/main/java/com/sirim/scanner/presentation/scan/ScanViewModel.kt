@@ -3,60 +3,48 @@ package com.sirim.scanner.presentation.scan
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sirim.scanner.domain.model.SirimRecord
-import com.sirim.scanner.domain.usecase.SaveRecordUseCase
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.util.UUID
 
-class ScanViewModel(
-    private val saveRecord: SaveRecordUseCase
-) : ViewModel() {
+class ScanViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(ScanUiState())
-    val uiState: StateFlow<ScanUiState> = _uiState
+    val uiState: StateFlow<ScanUiState> = _uiState.asStateFlow()
 
-    fun onBarcodeParsed(parsed: ParsedSirimPayload) {
-        if (_uiState.value.isSaving) return
+    fun simulateScan() {
+        if (_uiState.value.isScanning) return
+        _uiState.value = _uiState.value.copy(isScanning = true, error = null)
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isSaving = true)
-            val now = System.currentTimeMillis()
+            delay(1500)
             val record = SirimRecord(
-                sirimSerialNumber = parsed.serial,
-                batchNumber = parsed.batch,
-                brandTrademark = parsed.brand,
-                model = parsed.model,
-                type = parsed.type,
-                rating = parsed.rating,
-                size = parsed.size,
-                createdAt = now,
-                updatedAt = now
+                sirimSerialNo = UUID.randomUUID().toString().take(12),
+                createdAt = Instant.now().toEpochMilli(),
+                updatedAt = Instant.now().toEpochMilli(),
+                batchNumber = "SIM-${'$'}{(1000..9999).random()}",
+                brandTrademark = "Sample Brand",
+                model = "Model ${(1..5).random()}",
+                type = "Type ${(1..5).random()}",
+                rating = "${(100..240).random()}V",
+                size = "Standard",
+                isSynced = false,
+                deviceId = "LOCAL"
             )
-            saveRecord(record)
-            _uiState.value = _uiState.value.copy(
-                isSaving = false,
-                lastSavedSerial = parsed.serial,
-                statusMessage = "Record saved"
-            )
+            _uiState.value = _uiState.value.copy(isScanning = false, scannedRecord = record)
         }
     }
 
-    fun onStatusConsumed() {
-        _uiState.value = _uiState.value.copy(statusMessage = null)
+    fun clearResult() {
+        _uiState.value = ScanUiState()
     }
 }
 
 data class ScanUiState(
-    val isSaving: Boolean = false,
-    val lastSavedSerial: String? = null,
-    val statusMessage: String? = null
-)
-
-data class ParsedSirimPayload(
-    val serial: String,
-    val batch: String? = null,
-    val brand: String? = null,
-    val model: String? = null,
-    val type: String? = null,
-    val rating: String? = null,
-    val size: String? = null
+    val isScanning: Boolean = false,
+    val scannedRecord: SirimRecord? = null,
+    val error: String? = null,
 )

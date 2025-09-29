@@ -3,99 +3,131 @@ package com.sirim.scanner
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.sirim.scanner.presentation.ExportViewModelFactory
-import com.sirim.scanner.presentation.RecordsViewModelFactory
-import com.sirim.scanner.presentation.ScanViewModelFactory
-import com.sirim.scanner.presentation.export.ExportViewModel
-import com.sirim.scanner.presentation.navigation.SirimDestination
-import com.sirim.scanner.presentation.navigation.SirimNavGraph
+import com.sirim.scanner.presentation.AppDestination
+import com.sirim.scanner.presentation.auth.AuthScreen
+import com.sirim.scanner.presentation.auth.AuthViewModel
+import com.sirim.scanner.presentation.dashboard.DashboardScreen
+import com.sirim.scanner.presentation.records.RecordsScreen
 import com.sirim.scanner.presentation.records.RecordsViewModel
+import com.sirim.scanner.presentation.scan.ScanScreen
 import com.sirim.scanner.presentation.scan.ScanViewModel
 import com.sirim.scanner.presentation.theme.SirimScannerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val app = application as SirimScannerApp
-        app.container.scheduler.scheduleSync()
         setContent {
+            val appContainer = (application as SirimScannerApplication).appContainer
             SirimScannerTheme {
-                SirimApp(app)
+                SirimScannerApp(appContainer)
             }
         }
     }
 }
 
 @Composable
-private fun SirimApp(app: SirimScannerApp) {
+private fun SirimScannerApp(appContainer: AppContainer) {
     val navController = rememberNavController()
-    val scanViewModel: ScanViewModel = viewModel(factory = ScanViewModelFactory(app.container))
-    val recordsViewModel: RecordsViewModel = viewModel(factory = RecordsViewModelFactory(app.container))
-    val exportViewModel: ExportViewModel = viewModel(factory = ExportViewModelFactory(app.container))
 
-    val currentRoute by navController.currentBackStackEntryAsState()
+    val authViewModel: AuthViewModel = viewModel(factory = object : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return AuthViewModel(
+                    authenticateUser = appContainer.authenticateUser,
+                    registerUser = appContainer.registerUser,
+                    toggleBiometricPreference = appContainer.toggleBiometricPreference
+                ) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    })
 
-    Scaffold(
-        bottomBar = {
-            SirimBottomBar(currentRoute?.destination?.route) { destination ->
-                if (currentRoute?.destination?.route != destination.route) {
-                    navController.navigate(destination.route) {
-                        popUpTo(navController.graph.startDestinationId) {
-                            saveState = true
+    val recordsViewModel: RecordsViewModel = viewModel(factory = object : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(RecordsViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return RecordsViewModel(
+                    observeRecords = appContainer.observeRecords,
+                    saveRecordUseCase = appContainer.createOrUpdateRecord,
+                    deleteRecordUseCase = appContainer.deleteRecord,
+                    exportRecordsUseCase = appContainer.exportRecords
+                ) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    })
+
+    val scanViewModel: ScanViewModel = viewModel(factory = object : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(ScanViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return ScanViewModel() as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    })
+
+    val authState by authViewModel.uiState.collectAsState()
+
+    if (!authState.isAuthenticated) {
+        AuthScreen(
+            state = authState,
+            onUsernameChange = authViewModel::onUsernameChange,
+            onPasswordChange = authViewModel::onPasswordChange,
+            onSignIn = authViewModel::signIn,
+            onRegister = authViewModel::register
+        )
+    } else {
+        NavHost(navController = navController, startDestination = AppDestination.Dashboard.route) {
+            composable(AppDestination.Dashboard.route) {
+                val recordsState by recordsViewModel.uiState.collectAsState()
+                DashboardScreen(
+                    records = recordsState.records,
+                    onNavigateToScan = { navController.navigate(AppDestination.Scan.route) },
+                    onNavigateToRecords = { navController.navigate(AppDestination.Records.route) },
+                    onLogout = {
+                        authViewModel.signOut()
+                        navController.navigate(AppDestination.Auth.route) {
+                            popUpTo(AppDestination.Dashboard.route) { inclusive = true }
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
-                }
+                )
+            }
+            composable(AppDestination.Scan.route) {
+                ScanScreen(
+                    viewModel = scanViewModel,
+                    onRecordCaptured = { record ->
+                        recordsViewModel.saveRecord(record)
+                        navController.navigate(AppDestination.Records.route)
+                    }
+                )
+            }
+            composable(AppDestination.Records.route) {
+                val recordsState by recordsViewModel.uiState.collectAsState()
+                RecordsScreen(
+                    state = recordsState,
+                    onSearchChange = recordsViewModel::onSearchQueryChange,
+                    onSaveRecord = recordsViewModel::saveRecord,
+                    onDeleteRecord = recordsViewModel::deleteRecord,
+                    onExportExcel = recordsViewModel::exportRecordsExcel,
+                    onExportPdf = recordsViewModel::exportRecordsPdf,
+                    onExportBundle = recordsViewModel::exportRecordsBundle,
+                    onMessageShown = recordsViewModel::clearTransientMessages
+                )
+            }
+            composable(AppDestination.Auth.route) {
+                // This destination allows navigation when logging out to reuse AuthScreen.
             }
         }
-    ) { paddingValues ->
-        SirimNavGraph(
-            navController = navController,
-            scanViewModel = scanViewModel,
-            recordsViewModel = recordsViewModel,
-            exportViewModel = exportViewModel,
-            modifier = Modifier.padding(paddingValues)
-        )
-    }
-}
-
-@Composable
-private fun SirimBottomBar(currentRoute: String?, onDestinationSelected: (SirimDestination) -> Unit) {
-    NavigationBar {
-        SirimDestination.values().forEach { destination ->
-            NavigationBarItem(
-                selected = currentRoute == destination.route,
-                onClick = { onDestinationSelected(destination) },
-                icon = { Icon(imageVector = destination.icon(), contentDescription = destination.label) },
-                label = { Text(text = destination.label) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun SirimDestination.icon(): ImageVector {
-    return when (this) {
-        SirimDestination.Scan -> Icons.Filled.QrCodeScanner
-        SirimDestination.Records -> Icons.Filled.List
-        SirimDestination.Export -> Icons.Filled.Share
     }
 }

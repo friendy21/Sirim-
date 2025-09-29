@@ -1,5 +1,7 @@
 package com.sirim.qrscanner.ui.screens.auth
 
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,13 +17,18 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.sirim.qrscanner.ui.components.LoadingOverlay
 import com.sirim.qrscanner.ui.components.PrimaryButton
 import com.sirim.qrscanner.ui.state.AuthenticationUiState
+import java.util.concurrent.Executor
+import androidx.fragment.app.FragmentActivity
 
 @Composable
 fun AuthenticationScreen(
@@ -30,11 +37,51 @@ fun AuthenticationScreen(
     onPasswordChange: (String) -> Unit,
     onLogin: () -> Unit,
     onErrorDismissed: () -> Unit,
-    onNavigateToDashboard: () -> Unit
+    onNavigateToDashboard: () -> Unit,
+    onBiometricLogin: () -> Unit,
+    onBiometricFailure: (String) -> Unit
 ) {
     LaunchedEffect(state.isAuthenticated) {
         if (state.isAuthenticated) {
             onNavigateToDashboard()
+        }
+    }
+
+    val context = LocalContext.current
+    val activity = context as? FragmentActivity
+    val executor: Executor = remember(context) { ContextCompat.getMainExecutor(context) }
+    val biometricManager = remember(context) { BiometricManager.from(context) }
+    val canAuthenticate = remember(state.hasStoredCredentials, biometricManager) {
+        state.hasStoredCredentials &&
+            biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
+            BiometricManager.BIOMETRIC_SUCCESS
+    }
+
+    val promptInfo = remember {
+        BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Authenticate")
+            .setSubtitle("Confirm your identity to use saved credentials")
+            .setNegativeButtonText("Cancel")
+            .build()
+    }
+
+    val biometricPrompt = remember(activity) {
+        if (activity == null) {
+            null
+        } else {
+            BiometricPrompt(activity, executor, object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    onBiometricLogin()
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    onBiometricFailure(errString.toString())
+                }
+
+                override fun onAuthenticationFailed() {
+                    onBiometricFailure("Biometric authentication failed")
+                }
+            })
         }
     }
 
@@ -78,6 +125,14 @@ fun AuthenticationScreen(
             enabled = !state.isLoading,
             onClick = onLogin
         )
+        if (canAuthenticate && biometricPrompt != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            PrimaryButton(
+                text = "Use biometrics",
+                enabled = !state.isLoading,
+                onClick = { biometricPrompt.authenticate(promptInfo) }
+            )
+        }
     }
 
     if (state.errorMessage != null) {

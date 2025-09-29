@@ -1,13 +1,14 @@
 package com.sirim.qrscanner.core.data.di
 
 import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
+import androidx.work.WorkManager
 import com.sirim.qrscanner.core.common.DefaultDispatcherProvider
 import com.sirim.qrscanner.core.common.DispatcherProvider
 import com.sirim.qrscanner.core.data.repository.AuthenticationRepositoryImpl
+import com.sirim.qrscanner.core.data.repository.RecordExportRepositoryImpl
 import com.sirim.qrscanner.core.data.repository.SirimRecordRepositoryImpl
 import com.sirim.qrscanner.core.data.repository.SynchronizationRepositoryImpl
 import com.sirim.qrscanner.core.data.source.local.SirimRecordLocalDataSource
@@ -15,17 +16,16 @@ import com.sirim.qrscanner.core.data.source.local.TokenStorage
 import com.sirim.qrscanner.core.data.source.remote.SirimRecordRemoteDataSource
 import com.sirim.qrscanner.core.database.SirimDatabase
 import com.sirim.qrscanner.core.domain.repository.AuthenticationRepository
+import com.sirim.qrscanner.core.domain.repository.RecordExportRepository
 import com.sirim.qrscanner.core.domain.repository.SirimRecordRepository
 import com.sirim.qrscanner.core.domain.repository.SynchronizationRepository
 import com.sirim.qrscanner.core.network.service.SirimApiService
+import com.sirim.qrscanner.core.database.dao.SirimRecordDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -42,13 +42,22 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideDataStore(
-        @ApplicationContext context: Context
-    ): DataStore<Preferences> = androidx.datastore.preferences.core.PreferenceDataStoreFactory.create(
-        scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    ) {
-        context.preferencesDataStoreFile("sirim_qr_scanner")
-    }
+    fun provideMasterKey(@ApplicationContext context: Context): MasterKey = MasterKey.Builder(context)
+        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+        .build()
+
+    @Provides
+    @Singleton
+    fun provideSecurePreferences(
+        @ApplicationContext context: Context,
+        masterKey: MasterKey
+    ): android.content.SharedPreferences = EncryptedSharedPreferences.create(
+        context,
+        "sirim_qr_scanner_secure",
+        masterKey,
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+    )
 
     @Provides
     @Singleton
@@ -62,16 +71,21 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideSirimRecordDao(database: SirimDatabase) = database.sirimRecordDao()
+    fun provideSirimRecordDao(database: SirimDatabase): SirimRecordDao = database.sirimRecordDao()
 
     @Provides
     @Singleton
-    fun provideTokenStorage(dataStore: DataStore<Preferences>) = TokenStorage(dataStore)
+    fun provideTokenStorage(preferences: android.content.SharedPreferences) = TokenStorage(preferences)
 
     @Provides
     @Singleton
-    fun provideLocalDataSource(dao: com.sirim.qrscanner.core.database.dao.SirimRecordDao) =
+    fun provideLocalDataSource(dao: SirimRecordDao) =
         SirimRecordLocalDataSource(dao)
+
+    @Provides
+    @Singleton
+    fun provideWorkManager(@ApplicationContext context: Context): WorkManager =
+        WorkManager.getInstance(context)
 
     @Provides
     @Singleton
@@ -104,9 +118,16 @@ object DataModule {
     @Provides
     @Singleton
     fun provideSirimRecordRepository(
+        tokenStorage: TokenStorage,
+        remoteDataSource: SirimRecordRemoteDataSource,
         localDataSource: SirimRecordLocalDataSource,
         dispatcherProvider: DispatcherProvider
-    ): SirimRecordRepository = SirimRecordRepositoryImpl(localDataSource, dispatcherProvider)
+    ): SirimRecordRepository = SirimRecordRepositoryImpl(
+        tokenStorage,
+        remoteDataSource,
+        localDataSource,
+        dispatcherProvider
+    )
 
     @Provides
     @Singleton
@@ -129,4 +150,11 @@ object DataModule {
         localDataSource,
         dispatcherProvider
     )
+
+    @Provides
+    @Singleton
+    fun provideRecordExportRepository(
+        @ApplicationContext context: Context,
+        dispatcherProvider: DispatcherProvider
+    ): RecordExportRepository = RecordExportRepositoryImpl(context, dispatcherProvider)
 }

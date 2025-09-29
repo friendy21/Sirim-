@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sirim.qrscanner.core.common.DispatcherProvider
 import com.sirim.qrscanner.core.domain.model.SirimRecord
+import com.sirim.qrscanner.core.domain.repository.ExportFormat
 import com.sirim.qrscanner.core.domain.usecase.DeleteRecordUseCase
+import com.sirim.qrscanner.core.domain.usecase.ExportRecordsUseCase
 import com.sirim.qrscanner.core.domain.usecase.ObserveRecordsUseCase
 import com.sirim.qrscanner.core.domain.usecase.RefreshRecordsUseCase
 import com.sirim.qrscanner.core.domain.usecase.SearchRecordsUseCase
@@ -24,6 +26,7 @@ class RecordListViewModel @Inject constructor(
     private val refreshRecordsUseCase: RefreshRecordsUseCase,
     private val searchRecordsUseCase: SearchRecordsUseCase,
     private val deleteRecordUseCase: DeleteRecordUseCase,
+    private val exportRecordsUseCase: ExportRecordsUseCase,
     private val dispatcherProvider: DispatcherProvider
 ) : ViewModel() {
 
@@ -77,5 +80,34 @@ class RecordListViewModel @Inject constructor(
                     _state.value = _state.value.copy(errorMessage = throwable.message)
                 }
         }
+    }
+
+    fun export(format: ExportFormat) {
+        val records = _state.value.records
+        if (records.isEmpty()) {
+            _state.value = _state.value.copy(errorMessage = "No records to export")
+            return
+        }
+        viewModelScope.launch(dispatcherProvider.io) {
+            _state.value = _state.value.copy(isExporting = true, errorMessage = null)
+            runCatching { exportRecordsUseCase(records, format) }
+                .onSuccess { file ->
+                    _state.value = _state.value.copy(
+                        isExporting = false,
+                        exportedFilePath = file.absolutePath,
+                        exportedMimeType = format.mimeType
+                    )
+                }
+                .onFailure { throwable ->
+                    _state.value = _state.value.copy(
+                        isExporting = false,
+                        errorMessage = throwable.message ?: "Export failed"
+                    )
+                }
+        }
+    }
+
+    fun consumeExportedFile() {
+        _state.value = _state.value.copy(exportedFilePath = null, exportedMimeType = null)
     }
 }

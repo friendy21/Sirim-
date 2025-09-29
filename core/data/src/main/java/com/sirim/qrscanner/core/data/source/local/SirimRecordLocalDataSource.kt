@@ -28,6 +28,13 @@ class SirimRecordLocalDataSource(
         }
     }
 
+    suspend fun replaceAll(records: List<SirimRecord>) {
+        dao.clearAll()
+        if (records.isNotEmpty()) {
+            dao.insertAll(records.map { it.asEntity() })
+        }
+    }
+
     suspend fun markSynced(records: List<SirimRecord>) {
         records.forEach { record ->
             dao.update(record.copy(isSynced = true).asEntity())

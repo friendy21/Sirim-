@@ -5,5 +5,6 @@ data class AuthenticationUiState(
     val password: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val isAuthenticated: Boolean = false
+    val isAuthenticated: Boolean = false,
+    val hasStoredCredentials: Boolean = false
 )

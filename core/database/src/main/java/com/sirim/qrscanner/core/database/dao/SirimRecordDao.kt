@@ -29,9 +29,15 @@ interface SirimRecordDao {
     @Update
     suspend fun update(entity: SirimRecordEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(entities: List<SirimRecordEntity>)
+
     @Delete
     suspend fun delete(entity: SirimRecordEntity)
 
     @Query("SELECT COUNT(*) FROM sirim_records")
     suspend fun count(): Int
+
+    @Query("DELETE FROM sirim_records")
+    suspend fun clearAll()
 }

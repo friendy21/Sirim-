@@ -2,6 +2,8 @@ package com.sirim.qrscanner.core.data.repository
 
 import com.sirim.qrscanner.core.common.DispatcherProvider
 import com.sirim.qrscanner.core.data.source.local.SirimRecordLocalDataSource
+import com.sirim.qrscanner.core.data.source.local.TokenStorage
+import com.sirim.qrscanner.core.data.source.remote.SirimRecordRemoteDataSource
 import com.sirim.qrscanner.core.domain.model.SirimRecord
 import com.sirim.qrscanner.core.domain.repository.SirimRecordRepository
 import kotlinx.coroutines.CoroutineScope
@@ -10,10 +12,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 
 class SirimRecordRepositoryImpl(
+    private val tokenStorage: TokenStorage,
+    private val remoteDataSource: SirimRecordRemoteDataSource,
     private val localDataSource: SirimRecordLocalDataSource,
     private val dispatcherProvider: DispatcherProvider
 ) : SirimRecordRepository {
@@ -29,7 +34,13 @@ class SirimRecordRepositoryImpl(
         cachedRecords.map { records -> records.firstOrNull { it.id == id } }
 
     override suspend fun refresh() {
-        // In a full implementation this would coordinate with remote data.
+        withContext(dispatcherProvider.io) {
+            val token = tokenStorage.token.firstOrNull()
+                ?: throw IllegalStateException("Authentication token missing for refresh")
+            val remoteRecords = remoteDataSource.fetchRecords(token)
+            localDataSource.replaceAll(remoteRecords)
+            tokenStorage.updateLastSync(java.time.Instant.now().toEpochMilli())
+        }
     }
 
     override suspend fun search(query: String): List<SirimRecord> = withContext(dispatcherProvider.io) {

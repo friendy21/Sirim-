@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">SIRIM Scanner</string>
+    <string name="scan_title">Scan QR Code</string>
+    <string name="records_title">Records</string>
+    <string name="export_title">Export</string>
+    <string name="request_camera_permission">Camera access is required to scan SIRIM QR codes.</string>
+</resources>

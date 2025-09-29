@@ -1,0 +1,3714 @@
+diff --git a/app/build.gradle.kts b/app/build.gradle.kts
+new file mode 100644
+index 0000000000000000000000000000000000000000..e2ead55f4405b66a40d06c1427ac171e32c5a0b5
+--- /dev/null
++++ b/app/build.gradle.kts
+@@ -0,0 +1,103 @@
++plugins {
++    id("com.android.application")
++    id("org.jetbrains.kotlin.android")
++    id("com.google.devtools.ksp")
++}
++
++android {
++    namespace = "com.sirim.scanner"
++    compileSdk = 35
++
++    defaultConfig {
++        applicationId = "com.sirim.scanner"
++        minSdk = 35
++        targetSdk = 35
++        versionCode = 1
++        versionName = "1.0.0"
++
++        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
++        vectorDrawables.useSupportLibrary = true
++    }
++
++    buildTypes {
++        release {
++            isMinifyEnabled = true
++            isShrinkResources = true
++            proguardFiles(
++                getDefaultProguardFile("proguard-android-optimize.txt"),
++                "proguard-rules.pro"
++            )
++        }
++        debug {
++            isMinifyEnabled = false
++        }
++    }
++
++    compileOptions {
++        sourceCompatibility = JavaVersion.VERSION_17
++        targetCompatibility = JavaVersion.VERSION_17
++    }
++
++    kotlinOptions {
++        jvmTarget = "17"
++    }
++
++    buildFeatures {
++        compose = true
++    }
++
++    composeOptions {
++        kotlinCompilerExtensionVersion = "1.5.8"
++    }
++
++    packaging {
++        resources {
++            excludes += "/META-INF/{AL2.0,LGPL2.1}"
++        }
++    }
++}
++
++ksp {
++    arg("room.schemaLocation", "$projectDir/schemas")
++    arg("room.incremental", "true")
++    arg("room.expandProjection", "true")
++}
++val composeBom = platform("androidx.compose:compose-bom:2024.02.02")
++
++dependencies {
++    implementation(composeBom)
++    androidTestImplementation(composeBom)
++
++    implementation("androidx.core:core-ktx:1.12.0")
++    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
++    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
++    implementation("androidx.activity:activity-compose:1.8.2")
++    implementation("androidx.navigation:navigation-compose:2.7.7")
++
++    implementation("androidx.compose.ui:ui")
++    implementation("androidx.compose.material3:material3")
++    implementation("androidx.compose.ui:ui-tooling-preview")
++    debugImplementation("androidx.compose.ui:ui-tooling")
++    implementation("androidx.compose.material:material-icons-extended")
++
++    implementation("androidx.room:room-runtime:2.6.1")
++    implementation("androidx.room:room-ktx:2.6.1")
++    ksp("androidx.room:room-compiler:2.6.1")
++
++    implementation("androidx.work:work-runtime-ktx:2.9.0")
++    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
++
++    implementation("androidx.camera:camera-core:1.3.2")
++    implementation("androidx.camera:camera-camera2:1.3.2")
++    implementation("androidx.camera:camera-lifecycle:1.3.2")
++    implementation("androidx.camera:camera-view:1.3.2")
++
++    implementation("com.google.mlkit:barcode-scanning:17.2.0")
++
++    implementation("org.apache.poi:poi-ooxml:5.2.5")
++    implementation("com.itextpdf:itext7-core:7.2.5")
++
++    testImplementation("junit:junit:4.13.2")
++    androidTestImplementation("androidx.test.ext:junit:1.1.5")
++    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
++}
+diff --git a/app/proguard-rules.pro b/app/proguard-rules.pro
+new file mode 100644
+index 0000000000000000000000000000000000000000..7d921552c67cea20c3f4e659ea7c0f8d38056fae
+--- /dev/null
++++ b/app/proguard-rules.pro
+@@ -0,0 +1,21 @@
++# Keep ML Kit barcode scanning classes
++-keep class com.google.mlkit.** { *; }
++-keep interface com.google.mlkit.** { *; }
++
++# Apache POI for Excel export
++-keep class org.apache.poi.** { *; }
++-dontwarn org.apache.poi.**
++
++# iText PDF generation
++-keep class com.itextpdf.** { *; }
++-dontwarn com.itextpdf.**
++
++# CameraX
++-keep class androidx.camera.** { *; }
++
++# Jetpack Compose
++-keep class androidx.compose.** { *; }
++
++# WorkManager
++-keep class androidx.work.** { *; }
++-dontwarn androidx.work.**
+diff --git a/app/schemas/com.sirim.scanner.data.local.SirimDatabase/1.json b/app/schemas/com.sirim.scanner.data.local.SirimDatabase/1.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..0c96ee31e378244be2ed4c232f325cafa99eaa81
+--- /dev/null
++++ b/app/schemas/com.sirim.scanner.data.local.SirimDatabase/1.json
+@@ -0,0 +1,38 @@
++{
++  "formatVersion": 1,
++  "database": {
++    "version": 1,
++    "identityHash": "b315af45c7f4456098086fa0cb4c0e4c",
++    "entities": [
++      {
++        "tableName": "sirim_records",
++        "createSql": "CREATE TABLE IF NOT EXISTS `sirim_records` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sirim_serial_no` TEXT NOT NULL, `batch_no` TEXT, `brand_trademark` TEXT, `model` TEXT, `type` TEXT, `rating` TEXT, `size` TEXT, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, `is_synced` INTEGER NOT NULL, `device_id` TEXT)",
++        "fields": [
++          {"fieldPath": "id", "columnName": "id", "affinity": "INTEGER", "notNull": true},
++          {"fieldPath": "sirimSerialNumber", "columnName": "sirim_serial_no", "affinity": "TEXT", "notNull": true},
++          {"fieldPath": "batchNumber", "columnName": "batch_no", "affinity": "TEXT", "notNull": false},
++          {"fieldPath": "brandTrademark", "columnName": "brand_trademark", "affinity": "TEXT", "notNull": false},
++          {"fieldPath": "model", "columnName": "model", "affinity": "TEXT", "notNull": false},
++          {"fieldPath": "type", "columnName": "type", "affinity": "TEXT", "notNull": false},
++          {"fieldPath": "rating", "columnName": "rating", "affinity": "TEXT", "notNull": false},
++          {"fieldPath": "size", "columnName": "size", "affinity": "TEXT", "notNull": false},
++          {"fieldPath": "createdAt", "columnName": "created_at", "affinity": "INTEGER", "notNull": true},
++          {"fieldPath": "updatedAt", "columnName": "updated_at", "affinity": "INTEGER", "notNull": true},
++          {"fieldPath": "isSynced", "columnName": "is_synced", "affinity": "INTEGER", "notNull": true},
++          {"fieldPath": "deviceId", "columnName": "device_id", "affinity": "TEXT", "notNull": false}
++        ],
++        "primaryKey": {
++          "autoGenerate": true,
++          "columnNames": ["id"]
++        },
++        "indices": [],
++        "foreignKeys": []
++      }
++    ],
++    "views": [],
++    "setupQueries": [
++      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
++      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b315af45c7f4456098086fa0cb4c0e4c')"
++    ]
++  }
++}
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..2a7ec6c2ea94ecd5f65d9dca7a96ae6221a11d25
+--- /dev/null
++++ b/app/src/main/AndroidManifest.xml
+@@ -0,0 +1,52 @@
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:tools="http://schemas.android.com/tools">
++
++    <uses-feature android:name="android.hardware.camera.any" />
++
++    <uses-permission android:name="android.permission.CAMERA" />
++    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
++    <!-- Android 15 enhanced media permissions -->
++    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
++    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
++    <!-- Android 15 enhanced storage (scoped storage override for exports) -->
++    <uses-permission
++        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
++        tools:ignore="ScopedStorage" />
++    <!-- Android 15 enhanced biometric authentication -->
++    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
++    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
++
++    <application
++        android:name=".SirimScannerApp"
++        android:allowBackup="true"
++        android:dataExtractionRules="@xml/backup_rules"
++        android:fullBackupContent="@xml/backup_rules"
++        android:icon="@mipmap/ic_launcher"
++        android:label="SIRIM Scanner"
++        android:networkSecurityConfig="@xml/network_security_config"
++        android:roundIcon="@mipmap/ic_launcher_round"
++        android:supportsRtl="true"
++        android:theme="@style/Theme.SirimScanner"
++        tools:targetApi="35">
++        <provider
++            android:name="androidx.core.content.FileProvider"
++            android:authorities="com.sirim.scanner.provider"
++            android:exported="false"
++            android:grantUriPermissions="true">
++            <meta-data
++                android:name="android.support.FILE_PROVIDER_PATHS"
++                android:resource="@xml/file_paths" />
++        </provider>
++
++        <activity
++            android:name=".MainActivity"
++            android:exported="true"
++            android:theme="@style/Theme.SirimScanner">
++            <intent-filter>
++                <action android:name="android.intent.action.MAIN" />
++
++                <category android:name="android.intent.category.LAUNCHER" />
++            </intent-filter>
++        </activity>
++    </application>
++</manifest>
+diff --git a/app/src/main/java/com/sirim/scanner/MainActivity.kt b/app/src/main/java/com/sirim/scanner/MainActivity.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..5e2a11bdbaf5e1c2acab09bc3d344f4f340a2419
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/MainActivity.kt
+@@ -0,0 +1,101 @@
++package com.sirim.scanner
++
++import android.os.Bundle
++import androidx.activity.ComponentActivity
++import androidx.activity.compose.setContent
++import androidx.compose.foundation.layout.padding
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.filled.List
++import androidx.compose.material.icons.filled.QrCodeScanner
++import androidx.compose.material.icons.filled.Share
++import androidx.compose.material3.Icon
++import androidx.compose.material3.NavigationBar
++import androidx.compose.material3.NavigationBarItem
++import androidx.compose.material3.Scaffold
++import androidx.compose.material3.Text
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.getValue
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.graphics.vector.ImageVector
++import androidx.lifecycle.viewmodel.compose.viewModel
++import androidx.navigation.compose.currentBackStackEntryAsState
++import androidx.navigation.compose.rememberNavController
++import com.sirim.scanner.presentation.ExportViewModelFactory
++import com.sirim.scanner.presentation.RecordsViewModelFactory
++import com.sirim.scanner.presentation.ScanViewModelFactory
++import com.sirim.scanner.presentation.export.ExportViewModel
++import com.sirim.scanner.presentation.navigation.SirimDestination
++import com.sirim.scanner.presentation.navigation.SirimNavGraph
++import com.sirim.scanner.presentation.records.RecordsViewModel
++import com.sirim.scanner.presentation.scan.ScanViewModel
++import com.sirim.scanner.presentation.theme.SirimScannerTheme
++
++class MainActivity : ComponentActivity() {
++    override fun onCreate(savedInstanceState: Bundle?) {
++        super.onCreate(savedInstanceState)
++        val app = application as SirimScannerApp
++        app.container.scheduler.scheduleSync()
++        setContent {
++            SirimScannerTheme {
++                SirimApp(app)
++            }
++        }
++    }
++}
++
++@Composable
++private fun SirimApp(app: SirimScannerApp) {
++    val navController = rememberNavController()
++    val scanViewModel: ScanViewModel = viewModel(factory = ScanViewModelFactory(app.container))
++    val recordsViewModel: RecordsViewModel = viewModel(factory = RecordsViewModelFactory(app.container))
++    val exportViewModel: ExportViewModel = viewModel(factory = ExportViewModelFactory(app.container))
++
++    val currentRoute by navController.currentBackStackEntryAsState()
++
++    Scaffold(
++        bottomBar = {
++            SirimBottomBar(currentRoute?.destination?.route) { destination ->
++                if (currentRoute?.destination?.route != destination.route) {
++                    navController.navigate(destination.route) {
++                        popUpTo(navController.graph.startDestinationId) {
++                            saveState = true
++                        }
++                        launchSingleTop = true
++                        restoreState = true
++                    }
++                }
++            }
++        }
++    ) { paddingValues ->
++        SirimNavGraph(
++            navController = navController,
++            scanViewModel = scanViewModel,
++            recordsViewModel = recordsViewModel,
++            exportViewModel = exportViewModel,
++            modifier = Modifier.padding(paddingValues)
++        )
++    }
++}
++
++@Composable
++private fun SirimBottomBar(currentRoute: String?, onDestinationSelected: (SirimDestination) -> Unit) {
++    NavigationBar {
++        SirimDestination.values().forEach { destination ->
++            NavigationBarItem(
++                selected = currentRoute == destination.route,
++                onClick = { onDestinationSelected(destination) },
++                icon = { Icon(imageVector = destination.icon(), contentDescription = destination.label) },
++                label = { Text(text = destination.label) }
++            )
++        }
++    }
++}
++
++@Composable
++private fun SirimDestination.icon(): ImageVector {
++    return when (this) {
++        SirimDestination.Scan -> Icons.Filled.QrCodeScanner
++        SirimDestination.Records -> Icons.Filled.List
++        SirimDestination.Export -> Icons.Filled.Share
++    }
++}
+diff --git a/app/src/main/java/com/sirim/scanner/SirimScannerApp.kt b/app/src/main/java/com/sirim/scanner/SirimScannerApp.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..1bd4bf7fcec88e938e464df7d180e90592171139
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/SirimScannerApp.kt
+@@ -0,0 +1,14 @@
++package com.sirim.scanner
++
++import android.app.Application
++import com.sirim.scanner.di.AppContainer
++
++class SirimScannerApp : Application() {
++    lateinit var container: AppContainer
++        private set
++
++    override fun onCreate() {
++        super.onCreate()
++        container = AppContainer(this)
++    }
++}
+diff --git a/app/src/main/java/com/sirim/scanner/data/local/SirimDatabase.kt b/app/src/main/java/com/sirim/scanner/data/local/SirimDatabase.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..be8e85ef67b9baa26dbc6a5a55be2cbb8295a911
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/data/local/SirimDatabase.kt
+@@ -0,0 +1,13 @@
++package com.sirim.scanner.data.local
++
++import androidx.room.Database
++import androidx.room.RoomDatabase
++
++@Database(
++    entities = [SirimRecordEntity::class],
++    version = 1,
++    exportSchema = true
++)
++abstract class SirimDatabase : RoomDatabase() {
++    abstract fun recordDao(): SirimRecordDao
++}
+diff --git a/app/src/main/java/com/sirim/scanner/data/local/SirimRecordDao.kt b/app/src/main/java/com/sirim/scanner/data/local/SirimRecordDao.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..ef4a17148a86ca9d9135c8fcaff7b6afa0926c9e
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/data/local/SirimRecordDao.kt
+@@ -0,0 +1,30 @@
++package com.sirim.scanner.data.local
++
++import androidx.room.Dao
++import androidx.room.Delete
++import androidx.room.Insert
++import androidx.room.OnConflictStrategy
++import androidx.room.Query
++import androidx.room.Update
++import kotlinx.coroutines.flow.Flow
++
++@Dao
++interface SirimRecordDao {
++    @Query("SELECT * FROM sirim_records ORDER BY updated_at DESC")
++    fun observeAll(): Flow<List<SirimRecordEntity>>
++
++    @Query("SELECT * FROM sirim_records WHERE id = :id")
++    suspend fun getById(id: Long): SirimRecordEntity?
++
++    @Query("SELECT * FROM sirim_records WHERE sirim_serial_no = :serial LIMIT 1")
++    suspend fun getBySerial(serial: String): SirimRecordEntity?
++
++    @Insert(onConflict = OnConflictStrategy.REPLACE)
++    suspend fun upsert(record: SirimRecordEntity): Long
++
++    @Update
++    suspend fun update(record: SirimRecordEntity)
++
++    @Delete
++    suspend fun delete(record: SirimRecordEntity)
++}
+diff --git a/app/src/main/java/com/sirim/scanner/data/local/SirimRecordEntity.kt b/app/src/main/java/com/sirim/scanner/data/local/SirimRecordEntity.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..eacc2ec8c9e3f937c74fab4455a7e6e620d6ba33
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/data/local/SirimRecordEntity.kt
+@@ -0,0 +1,21 @@
++package com.sirim.scanner.data.local
++
++import androidx.room.ColumnInfo
++import androidx.room.Entity
++import androidx.room.PrimaryKey
++
++@Entity(tableName = "sirim_records")
++data class SirimRecordEntity(
++    @PrimaryKey(autoGenerate = true) val id: Long = 0L,
++    @ColumnInfo(name = "sirim_serial_no") val sirimSerialNumber: String,
++    @ColumnInfo(name = "batch_no") val batchNumber: String?,
++    @ColumnInfo(name = "brand_trademark") val brandTrademark: String?,
++    val model: String?,
++    val type: String?,
++    val rating: String?,
++    val size: String?,
++    @ColumnInfo(name = "created_at") val createdAt: Long,
++    @ColumnInfo(name = "updated_at") val updatedAt: Long,
++    @ColumnInfo(name = "is_synced") val isSynced: Boolean = false,
++    @ColumnInfo(name = "device_id") val deviceId: String? = null
++)
+diff --git a/app/src/main/java/com/sirim/scanner/data/repository/SirimRecordRepository.kt b/app/src/main/java/com/sirim/scanner/data/repository/SirimRecordRepository.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..c7c4cb2416ea9f4ebdbfb12b89f065ddc0d2fe0c
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/data/repository/SirimRecordRepository.kt
+@@ -0,0 +1,56 @@
++package com.sirim.scanner.data.repository
++
++import com.sirim.scanner.data.local.SirimRecordDao
++import com.sirim.scanner.data.local.SirimRecordEntity
++import com.sirim.scanner.domain.model.SirimRecord
++import kotlinx.coroutines.flow.Flow
++import kotlinx.coroutines.flow.map
++
++class SirimRecordRepository(private val dao: SirimRecordDao) {
++    fun observeRecords(): Flow<List<SirimRecord>> = dao.observeAll().map { entities ->
++        entities.map { it.toDomain() }
++    }
++
++    suspend fun getById(id: Long): SirimRecord? = dao.getById(id)?.toDomain()
++
++    suspend fun save(record: SirimRecord): Long {
++        val entity = record.toEntity()
++        return dao.upsert(entity)
++    }
++
++    suspend fun delete(record: SirimRecord) {
++        record.id?.let { id ->
++            dao.getById(id)?.let { dao.delete(it) }
++        }
++    }
++
++    private fun SirimRecordEntity.toDomain(): SirimRecord = SirimRecord(
++        id = id,
++        sirimSerialNumber = sirimSerialNumber,
++        batchNumber = batchNumber,
++        brandTrademark = brandTrademark,
++        model = model,
++        type = type,
++        rating = rating,
++        size = size,
++        createdAt = createdAt,
++        updatedAt = updatedAt,
++        isSynced = isSynced,
++        deviceId = deviceId
++    )
++
++    private fun SirimRecord.toEntity(): SirimRecordEntity = SirimRecordEntity(
++        id = id ?: 0L,
++        sirimSerialNumber = sirimSerialNumber,
++        batchNumber = batchNumber,
++        brandTrademark = brandTrademark,
++        model = model,
++        type = type,
++        rating = rating,
++        size = size,
++        createdAt = createdAt,
++        updatedAt = updatedAt,
++        isSynced = isSynced,
++        deviceId = deviceId
++    )
++}
+diff --git a/app/src/main/java/com/sirim/scanner/di/AppContainer.kt b/app/src/main/java/com/sirim/scanner/di/AppContainer.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..6585bf39ef93943f049cfbbf187c2ebb16365c00
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/di/AppContainer.kt
+@@ -0,0 +1,29 @@
++package com.sirim.scanner.di
++
++import android.content.Context
++import androidx.room.Room
++import com.sirim.scanner.data.local.SirimDatabase
++import com.sirim.scanner.data.repository.SirimRecordRepository
++import com.sirim.scanner.domain.usecase.DeleteRecordUseCase
++import com.sirim.scanner.domain.usecase.ExportRecordsUseCase
++import com.sirim.scanner.domain.usecase.GetRecordDetailUseCase
++import com.sirim.scanner.domain.usecase.GetRecordsUseCase
++import com.sirim.scanner.domain.usecase.SaveRecordUseCase
++import com.sirim.scanner.sync.Scheduler
++
++class AppContainer(context: Context) {
++    private val database: SirimDatabase = Room.databaseBuilder(
++        context,
++        SirimDatabase::class.java,
++        "sirim.db"
++    ).fallbackToDestructiveMigration().build()
++
++    private val repository = SirimRecordRepository(database.recordDao())
++
++    val getRecords = GetRecordsUseCase(repository)
++    val getRecordDetail = GetRecordDetailUseCase(repository)
++    val saveRecord = SaveRecordUseCase(repository)
++    val deleteRecord = DeleteRecordUseCase(repository)
++    val exportRecords = ExportRecordsUseCase(repository, context)
++    val scheduler = Scheduler(context)
++}
+diff --git a/app/src/main/java/com/sirim/scanner/domain/model/SirimRecord.kt b/app/src/main/java/com/sirim/scanner/domain/model/SirimRecord.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..569bb6e1656ec88b8ff8419aa27f83c4d5eb7061
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/domain/model/SirimRecord.kt
+@@ -0,0 +1,16 @@
++package com.sirim.scanner.domain.model
++
++data class SirimRecord(
++    val id: Long? = null,
++    val sirimSerialNumber: String,
++    val batchNumber: String? = null,
++    val brandTrademark: String? = null,
++    val model: String? = null,
++    val type: String? = null,
++    val rating: String? = null,
++    val size: String? = null,
++    val createdAt: Long,
++    val updatedAt: Long,
++    val isSynced: Boolean = false,
++    val deviceId: String? = null
++)
+diff --git a/app/src/main/java/com/sirim/scanner/domain/usecase/DeleteRecordUseCase.kt b/app/src/main/java/com/sirim/scanner/domain/usecase/DeleteRecordUseCase.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..ef20e218eec13da7829aeaed8f25a7d682069328
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/domain/usecase/DeleteRecordUseCase.kt
+@@ -0,0 +1,8 @@
++package com.sirim.scanner.domain.usecase
++
++import com.sirim.scanner.data.repository.SirimRecordRepository
++import com.sirim.scanner.domain.model.SirimRecord
++
++class DeleteRecordUseCase(private val repository: SirimRecordRepository) {
++    suspend operator fun invoke(record: SirimRecord) = repository.delete(record)
++}
+diff --git a/app/src/main/java/com/sirim/scanner/domain/usecase/ExportRecordsUseCase.kt b/app/src/main/java/com/sirim/scanner/domain/usecase/ExportRecordsUseCase.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..641fff8e7f61f24aca0e2e9af222cd767342df16
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/domain/usecase/ExportRecordsUseCase.kt
+@@ -0,0 +1,117 @@
++package com.sirim.scanner.domain.usecase
++
++import android.content.Context
++import android.net.Uri
++import androidx.core.content.FileProvider
++import com.itextpdf.kernel.pdf.PdfDocument
++import com.itextpdf.kernel.pdf.PdfWriter
++import com.itextpdf.layout.Document
++import com.itextpdf.layout.element.Paragraph
++import com.sirim.scanner.data.repository.SirimRecordRepository
++import com.sirim.scanner.domain.model.SirimRecord
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.flow.first
++import kotlinx.coroutines.withContext
++import org.apache.poi.xssf.usermodel.XSSFWorkbook
++import java.io.File
++import java.io.FileOutputStream
++import java.util.zip.ZipEntry
++import java.util.zip.ZipOutputStream
++
++class ExportRecordsUseCase(
++    private val repository: SirimRecordRepository,
++    private val context: Context
++) {
++    suspend operator fun invoke(format: Format): Uri = withContext(Dispatchers.IO) {
++        val records = repository.observeRecords().first()
++        when (format) {
++            Format.EXCEL -> exportExcel(records)
++            Format.PDF -> exportPdf(records)
++            Format.ZIP -> exportZip(records)
++        }
++    }
++
++    private fun exportExcel(records: List<SirimRecord>): Uri {
++        val workbook = XSSFWorkbook()
++        val sheet = workbook.createSheet("SIRIM Records")
++        val header = sheet.createRow(0)
++        val columns = listOf(
++            "Serial", "Batch", "Brand", "Model", "Type", "Rating", "Size", "Updated"
++        )
++        columns.forEachIndexed { index, value ->
++            header.createCell(index).setCellValue(value)
++        }
++        records.forEachIndexed { rowIndex, record ->
++            val row = sheet.createRow(rowIndex + 1)
++            row.createCell(0).setCellValue(record.sirimSerialNumber)
++            row.createCell(1).setCellValue(record.batchNumber.orEmpty())
++            row.createCell(2).setCellValue(record.brandTrademark.orEmpty())
++            row.createCell(3).setCellValue(record.model.orEmpty())
++            row.createCell(4).setCellValue(record.type.orEmpty())
++            row.createCell(5).setCellValue(record.rating.orEmpty())
++            row.createCell(6).setCellValue(record.size.orEmpty())
++            row.createCell(7).setCellValue(record.updatedAt.toString())
++        }
++        val file = createTempFile("records", ".xlsx")
++        FileOutputStream(file).use { workbook.write(it) }
++        workbook.close()
++        return toUri(file)
++    }
++
++    private fun exportPdf(records: List<SirimRecord>): Uri {
++        val file = createTempFile("records", ".pdf")
++        val pdfDocument = PdfDocument(PdfWriter(file))
++        val document = Document(pdfDocument)
++        document.add(Paragraph("SIRIM Records"))
++        records.forEach { record ->
++            document.add(Paragraph("Serial: ${record.sirimSerialNumber}"))
++            record.batchNumber?.let { document.add(Paragraph("Batch: $it")) }
++            record.brandTrademark?.let { document.add(Paragraph("Brand: $it")) }
++            record.model?.let { document.add(Paragraph("Model: $it")) }
++            record.type?.let { document.add(Paragraph("Type: $it")) }
++            record.rating?.let { document.add(Paragraph("Rating: $it")) }
++            record.size?.let { document.add(Paragraph("Size: $it")) }
++            document.add(Paragraph("Updated: ${record.updatedAt}"))
++            document.add(Paragraph(" "))
++        }
++        document.close()
++        pdfDocument.close()
++        return toUri(file)
++    }
++
++    private fun exportZip(records: List<SirimRecord>): Uri {
++        val zipFile = createTempFile("records", ".zip")
++        ZipOutputStream(FileOutputStream(zipFile)).use { zipStream ->
++            records.forEach { record ->
++                val entry = ZipEntry("${record.sirimSerialNumber}.txt")
++                zipStream.putNextEntry(entry)
++                val content = buildString {
++                    appendLine("Serial: ${record.sirimSerialNumber}")
++                    appendLine("Batch: ${record.batchNumber.orEmpty()}")
++                    appendLine("Brand: ${record.brandTrademark.orEmpty()}")
++                    appendLine("Model: ${record.model.orEmpty()}")
++                    appendLine("Type: ${record.type.orEmpty()}")
++                    appendLine("Rating: ${record.rating.orEmpty()}")
++                    appendLine("Size: ${record.size.orEmpty()}")
++                    appendLine("Updated: ${record.updatedAt}")
++                }
++                zipStream.write(content.toByteArray())
++                zipStream.closeEntry()
++            }
++        }
++        return toUri(zipFile)
++    }
++
++    private fun createTempFile(name: String, suffix: String): File {
++        val directory = File(context.cacheDir, "exports").apply { mkdirs() }
++        return File.createTempFile(name, suffix, directory)
++    }
++
++    private fun toUri(file: File): Uri = FileProvider.getUriForFile(
++        context,
++        "${context.packageName}.provider",
++        file
++    )
++
++    enum class Format { EXCEL, PDF, ZIP }
++}
+diff --git a/app/src/main/java/com/sirim/scanner/domain/usecase/GetRecordDetailUseCase.kt b/app/src/main/java/com/sirim/scanner/domain/usecase/GetRecordDetailUseCase.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..87aa19225d3369f5f7db8b6f38b89da0eb7ce4ac
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/domain/usecase/GetRecordDetailUseCase.kt
+@@ -0,0 +1,8 @@
++package com.sirim.scanner.domain.usecase
++
++import com.sirim.scanner.data.repository.SirimRecordRepository
++import com.sirim.scanner.domain.model.SirimRecord
++
++class GetRecordDetailUseCase(private val repository: SirimRecordRepository) {
++    suspend operator fun invoke(id: Long): SirimRecord? = repository.getById(id)
++}
+diff --git a/app/src/main/java/com/sirim/scanner/domain/usecase/GetRecordsUseCase.kt b/app/src/main/java/com/sirim/scanner/domain/usecase/GetRecordsUseCase.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..faf3956333cfea54a8886434ed71b91ed02c7f61
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/domain/usecase/GetRecordsUseCase.kt
+@@ -0,0 +1,9 @@
++package com.sirim.scanner.domain.usecase
++
++import com.sirim.scanner.data.repository.SirimRecordRepository
++import com.sirim.scanner.domain.model.SirimRecord
++import kotlinx.coroutines.flow.Flow
++
++class GetRecordsUseCase(private val repository: SirimRecordRepository) {
++    operator fun invoke(): Flow<List<SirimRecord>> = repository.observeRecords()
++}
+diff --git a/app/src/main/java/com/sirim/scanner/domain/usecase/SaveRecordUseCase.kt b/app/src/main/java/com/sirim/scanner/domain/usecase/SaveRecordUseCase.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..2d73bf64ed1d8d7be31e293620ae892a3afcf49b
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/domain/usecase/SaveRecordUseCase.kt
+@@ -0,0 +1,8 @@
++package com.sirim.scanner.domain.usecase
++
++import com.sirim.scanner.data.repository.SirimRecordRepository
++import com.sirim.scanner.domain.model.SirimRecord
++
++class SaveRecordUseCase(private val repository: SirimRecordRepository) {
++    suspend operator fun invoke(record: SirimRecord): Long = repository.save(record)
++}
+diff --git a/app/src/main/java/com/sirim/scanner/presentation/ViewModelFactories.kt b/app/src/main/java/com/sirim/scanner/presentation/ViewModelFactories.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..669cc145fd3f48beaf23fdff34dc27db30835619
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/presentation/ViewModelFactories.kt
+@@ -0,0 +1,38 @@
++package com.sirim.scanner.presentation
++
++import androidx.lifecycle.ViewModel
++import androidx.lifecycle.ViewModelProvider
++import com.sirim.scanner.di.AppContainer
++import com.sirim.scanner.presentation.export.ExportViewModel
++import com.sirim.scanner.presentation.records.RecordsViewModel
++import com.sirim.scanner.presentation.scan.ScanViewModel
++
++class ScanViewModelFactory(private val container: AppContainer) : ViewModelProvider.Factory {
++    override fun <T : ViewModel> create(modelClass: Class<T>): T {
++        if (modelClass.isAssignableFrom(ScanViewModel::class.java)) {
++            @Suppress("UNCHECKED_CAST")
++            return ScanViewModel(container.saveRecord) as T
++        }
++        throw IllegalArgumentException("Unknown ViewModel")
++    }
++}
++
++class RecordsViewModelFactory(private val container: AppContainer) : ViewModelProvider.Factory {
++    override fun <T : ViewModel> create(modelClass: Class<T>): T {
++        if (modelClass.isAssignableFrom(RecordsViewModel::class.java)) {
++            @Suppress("UNCHECKED_CAST")
++            return RecordsViewModel(container.getRecords, container.deleteRecord) as T
++        }
++        throw IllegalArgumentException("Unknown ViewModel")
++    }
++}
++
++class ExportViewModelFactory(private val container: AppContainer) : ViewModelProvider.Factory {
++    override fun <T : ViewModel> create(modelClass: Class<T>): T {
++        if (modelClass.isAssignableFrom(ExportViewModel::class.java)) {
++            @Suppress("UNCHECKED_CAST")
++            return ExportViewModel(container.exportRecords) as T
++        }
++        throw IllegalArgumentException("Unknown ViewModel")
++    }
++}
+diff --git a/app/src/main/java/com/sirim/scanner/presentation/export/ExportScreen.kt b/app/src/main/java/com/sirim/scanner/presentation/export/ExportScreen.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..8007d44a6e2226eec813608851aca9caea133458
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/presentation/export/ExportScreen.kt
+@@ -0,0 +1,76 @@
++package com.sirim.scanner.presentation.export
++
++import android.content.Intent
++import androidx.compose.foundation.layout.Arrangement
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.fillMaxSize
++import androidx.compose.foundation.layout.fillMaxWidth
++import androidx.compose.foundation.layout.padding
++import androidx.compose.material3.Button
++import androidx.compose.material3.MaterialTheme
++import androidx.compose.material3.Text
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.LaunchedEffect
++import androidx.compose.runtime.getValue
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.platform.LocalContext
++import androidx.compose.ui.unit.dp
++import androidx.lifecycle.compose.collectAsStateWithLifecycle
++import com.sirim.scanner.domain.usecase.ExportRecordsUseCase
++
++@Composable
++fun ExportScreen(viewModel: ExportViewModel) {
++    val context = LocalContext.current
++    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
++
++    LaunchedEffect(uiState.exportedUri) {
++        uiState.exportedUri?.let { uri ->
++            val shareIntent = Intent(Intent.ACTION_SEND).apply {
++                type = "application/octet-stream"
++                putExtra(Intent.EXTRA_STREAM, uri)
++                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
++            }
++            context.startActivity(Intent.createChooser(shareIntent, "Share export"))
++            viewModel.consumeResult()
++        }
++    }
++
++    Column(
++        modifier = Modifier
++            .fillMaxSize()
++            .padding(16.dp),
++        verticalArrangement = Arrangement.spacedBy(12.dp)
++    ) {
++        Text(text = "Export records", style = MaterialTheme.typography.headlineSmall)
++        ExportOption(
++            label = "Export as Excel",
++            onClick = { viewModel.export(ExportRecordsUseCase.Format.EXCEL) }
++        )
++        ExportOption(
++            label = "Export as PDF",
++            onClick = { viewModel.export(ExportRecordsUseCase.Format.PDF) }
++        )
++        ExportOption(
++            label = "Export as ZIP",
++            onClick = { viewModel.export(ExportRecordsUseCase.Format.ZIP) }
++        )
++        if (uiState.isProcessing) {
++            Text(text = "Generating file…")
++        }
++        uiState.error?.let { error ->
++            Text(text = error, color = MaterialTheme.colorScheme.error)
++        }
++    }
++}
++
++@Composable
++private fun ExportOption(label: String, onClick: () -> Unit) {
++    Button(
++        onClick = onClick,
++        modifier = Modifier
++            .fillMaxWidth()
++            .padding(top = 8.dp)
++    ) {
++        Text(text = label)
++    }
++}
+diff --git a/app/src/main/java/com/sirim/scanner/presentation/export/ExportViewModel.kt b/app/src/main/java/com/sirim/scanner/presentation/export/ExportViewModel.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..5d1f0c3cbc2677a32ed6ab3f47e12e59e504d258
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/presentation/export/ExportViewModel.kt
+@@ -0,0 +1,39 @@
++package com.sirim.scanner.presentation.export
++
++import android.net.Uri
++import androidx.lifecycle.ViewModel
++import androidx.lifecycle.viewModelScope
++import com.sirim.scanner.domain.usecase.ExportRecordsUseCase
++import kotlinx.coroutines.flow.MutableStateFlow
++import kotlinx.coroutines.flow.StateFlow
++import kotlinx.coroutines.launch
++
++class ExportViewModel(
++    private val exportRecords: ExportRecordsUseCase
++) : ViewModel() {
++
++    private val _uiState = MutableStateFlow(ExportUiState())
++    val uiState: StateFlow<ExportUiState> = _uiState
++
++    fun export(format: ExportRecordsUseCase.Format) {
++        viewModelScope.launch {
++            _uiState.value = ExportUiState(isProcessing = true)
++            try {
++                val uri = exportRecords(format)
++                _uiState.value = ExportUiState(isProcessing = false, exportedUri = uri)
++            } catch (error: Throwable) {
++                _uiState.value = ExportUiState(isProcessing = false, error = error.message)
++            }
++        }
++    }
++
++    fun consumeResult() {
++        _uiState.value = ExportUiState()
++    }
++}
++
++data class ExportUiState(
++    val isProcessing: Boolean = false,
++    val exportedUri: Uri? = null,
++    val error: String? = null
++)
+diff --git a/app/src/main/java/com/sirim/scanner/presentation/navigation/SirimDestination.kt b/app/src/main/java/com/sirim/scanner/presentation/navigation/SirimDestination.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..78412cb7822f8c0692a9a812de40cfa967a04faa
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/presentation/navigation/SirimDestination.kt
+@@ -0,0 +1,7 @@
++package com.sirim.scanner.presentation.navigation
++
++enum class SirimDestination(val route: String, val label: String) {
++    Scan("scan", "Scan"),
++    Records("records", "Records"),
++    Export("export", "Export")
++}
+diff --git a/app/src/main/java/com/sirim/scanner/presentation/navigation/SirimNavGraph.kt b/app/src/main/java/com/sirim/scanner/presentation/navigation/SirimNavGraph.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..15122a6da486db16f011bb011dcee5a575079944
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/presentation/navigation/SirimNavGraph.kt
+@@ -0,0 +1,38 @@
++package com.sirim.scanner.presentation.navigation
++
++import androidx.compose.runtime.Composable
++import androidx.compose.ui.Modifier
++import androidx.navigation.NavHostController
++import androidx.navigation.compose.NavHost
++import androidx.navigation.compose.composable
++import com.sirim.scanner.presentation.records.RecordsScreen
++import com.sirim.scanner.presentation.records.RecordsViewModel
++import com.sirim.scanner.presentation.scan.ScanScreen
++import com.sirim.scanner.presentation.scan.ScanViewModel
++import com.sirim.scanner.presentation.export.ExportScreen
++import com.sirim.scanner.presentation.export.ExportViewModel
++
++@Composable
++fun SirimNavGraph(
++    navController: NavHostController,
++    scanViewModel: ScanViewModel,
++    recordsViewModel: RecordsViewModel,
++    exportViewModel: ExportViewModel,
++    modifier: Modifier = Modifier
++) {
++    NavHost(
++        navController = navController,
++        startDestination = SirimDestination.Scan.route,
++        modifier = modifier
++    ) {
++        composable(SirimDestination.Scan.route) {
++            ScanScreen(viewModel = scanViewModel)
++        }
++        composable(SirimDestination.Records.route) {
++            RecordsScreen(viewModel = recordsViewModel)
++        }
++        composable(SirimDestination.Export.route) {
++            ExportScreen(viewModel = exportViewModel)
++        }
++    }
++}
+diff --git a/app/src/main/java/com/sirim/scanner/presentation/records/RecordsScreen.kt b/app/src/main/java/com/sirim/scanner/presentation/records/RecordsScreen.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..c49bcf871d463a67712727b15673d76d8652a059
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/presentation/records/RecordsScreen.kt
+@@ -0,0 +1,108 @@
++package com.sirim.scanner.presentation.records
++
++import androidx.compose.foundation.clickable
++import androidx.compose.foundation.layout.Arrangement
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.fillMaxSize
++import androidx.compose.foundation.layout.fillMaxWidth
++import androidx.compose.foundation.layout.padding
++import androidx.compose.foundation.lazy.LazyColumn
++import androidx.compose.foundation.lazy.items
++import androidx.compose.material3.AlertDialog
++import androidx.compose.material3.Button
++import androidx.compose.material3.Card
++import androidx.compose.material3.MaterialTheme
++import androidx.compose.material3.Text
++import androidx.compose.material3.TextButton
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.remember
++import androidx.compose.runtime.setValue
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.res.stringResource
++import androidx.compose.ui.text.font.FontWeight
++import androidx.compose.ui.unit.dp
++import androidx.lifecycle.compose.collectAsStateWithLifecycle
++import com.sirim.scanner.R
++import com.sirim.scanner.domain.model.SirimRecord
++
++@Composable
++fun RecordsScreen(viewModel: RecordsViewModel) {
++    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
++    var selected by remember { mutableStateOf<SirimRecord?>(null) }
++
++    Column(
++        modifier = Modifier
++            .fillMaxSize()
++            .padding(16.dp),
++        verticalArrangement = Arrangement.spacedBy(12.dp)
++    ) {
++        Text(
++            text = stringResource(id = R.string.records_title),
++            style = MaterialTheme.typography.headlineSmall,
++            fontWeight = FontWeight.Bold
++        )
++        LazyColumn(
++            modifier = Modifier.fillMaxSize(),
++            verticalArrangement = Arrangement.spacedBy(8.dp)
++        ) {
++            items(uiState.records, key = { it.id ?: it.sirimSerialNumber }) { record ->
++                RecordCard(record = record, onClick = { selected = record })
++            }
++        }
++    }
++
++    selected?.let { record ->
++        DeleteDialog(
++            record = record,
++            onDismiss = { selected = null },
++            onConfirm = {
++                viewModel.delete(record)
++                selected = null
++            }
++        )
++    }
++}
++
++@Composable
++private fun RecordCard(record: SirimRecord, onClick: () -> Unit) {
++    Card(
++        modifier = Modifier
++            .fillMaxWidth()
++            .clickable(onClick = onClick)
++    ) {
++        Column(modifier = Modifier.padding(16.dp)) {
++            Text(text = record.sirimSerialNumber, style = MaterialTheme.typography.titleMedium)
++            record.brandTrademark?.takeIf { it.isNotBlank() }?.let {
++                Text(text = it, style = MaterialTheme.typography.bodyMedium)
++            }
++            record.model?.takeIf { it.isNotBlank() }?.let {
++                Text(text = it, style = MaterialTheme.typography.bodySmall)
++            }
++            Text(
++                text = "Updated: ${record.updatedAt}",
++                style = MaterialTheme.typography.bodySmall
++            )
++        }
++    }
++}
++
++@Composable
++private fun DeleteDialog(record: SirimRecord, onDismiss: () -> Unit, onConfirm: () -> Unit) {
++    AlertDialog(
++        onDismissRequest = onDismiss,
++        confirmButton = {
++            Button(onClick = onConfirm) {
++                Text(text = "Delete")
++            }
++        },
++        dismissButton = {
++            TextButton(onClick = onDismiss) {
++                Text(text = "Cancel")
++            }
++        },
++        title = { Text(text = "Delete record") },
++        text = { Text(text = "Remove ${record.sirimSerialNumber} from local storage?") }
++    )
++}
+diff --git a/app/src/main/java/com/sirim/scanner/presentation/records/RecordsViewModel.kt b/app/src/main/java/com/sirim/scanner/presentation/records/RecordsViewModel.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..96b9034fe0d5985e3fd0173ca2d5f94999b23a46
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/presentation/records/RecordsViewModel.kt
+@@ -0,0 +1,43 @@
++package com.sirim.scanner.presentation.records
++
++import androidx.lifecycle.ViewModel
++import androidx.lifecycle.viewModelScope
++import com.sirim.scanner.domain.model.SirimRecord
++import com.sirim.scanner.domain.usecase.DeleteRecordUseCase
++import com.sirim.scanner.domain.usecase.GetRecordsUseCase
++import kotlinx.coroutines.flow.SharingStarted
++import kotlinx.coroutines.flow.StateFlow
++import kotlinx.coroutines.flow.map
++import kotlinx.coroutines.flow.stateIn
++import kotlinx.coroutines.launch
++
++class RecordsViewModel(
++    getRecords: GetRecordsUseCase,
++    private val deleteRecord: DeleteRecordUseCase
++) : ViewModel() {
++
++    private val recordsFlow = getRecords()
++        .stateIn(
++            scope = viewModelScope,
++            started = SharingStarted.WhileSubscribed(5_000),
++            initialValue = emptyList()
++        )
++
++    val uiState: StateFlow<RecordsUiState> = recordsFlow
++        .map { RecordsUiState(records = it) }
++        .stateIn(
++            scope = viewModelScope,
++            started = SharingStarted.WhileSubscribed(5_000),
++            initialValue = RecordsUiState(records = emptyList())
++        )
++
++    fun delete(record: SirimRecord) {
++        viewModelScope.launch {
++            deleteRecord(record)
++        }
++    }
++}
++
++data class RecordsUiState(
++    val records: List<SirimRecord>
++)
+diff --git a/app/src/main/java/com/sirim/scanner/presentation/scan/MlKitBarcodeAnalyzer.kt b/app/src/main/java/com/sirim/scanner/presentation/scan/MlKitBarcodeAnalyzer.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..2be15edb96991ad66217dfcb6858d42fb78a491b
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/presentation/scan/MlKitBarcodeAnalyzer.kt
+@@ -0,0 +1,30 @@
++package com.sirim.scanner.presentation.scan
++
++import androidx.camera.core.ImageAnalysis
++import androidx.camera.core.ImageProxy
++import com.google.mlkit.vision.barcode.BarcodeScanning
++import com.google.mlkit.vision.barcode.common.Barcode
++import com.google.mlkit.vision.common.InputImage
++
++class MlKitBarcodeAnalyzer(
++    private val onResult: (List<Barcode>) -> Unit
++) : ImageAnalysis.Analyzer {
++
++    private val scanner = BarcodeScanning.getClient()
++
++    override fun analyze(image: ImageProxy) {
++        val mediaImage = image.image ?: run {
++            image.close()
++            return
++        }
++        val rotationDegrees = image.imageInfo.rotationDegrees
++        val inputImage = InputImage.fromMediaImage(mediaImage, rotationDegrees)
++        scanner.process(inputImage)
++            .addOnSuccessListener { barcodes ->
++                if (barcodes.isNotEmpty()) {
++                    onResult(barcodes)
++                }
++            }
++            .addOnCompleteListener { image.close() }
++    }
++}
+diff --git a/app/src/main/java/com/sirim/scanner/presentation/scan/PayloadParser.kt b/app/src/main/java/com/sirim/scanner/presentation/scan/PayloadParser.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..f3bd3016965a8fc2760eec894dc62373f831c8b9
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/presentation/scan/PayloadParser.kt
+@@ -0,0 +1,20 @@
++package com.sirim.scanner.presentation.scan
++
++fun parseSirimPayload(raw: String): ParsedSirimPayload? {
++    val tokens = raw.split("|")
++    if (tokens.size < 2) return null
++    val map = tokens.mapNotNull {
++        val parts = it.split(":", limit = 2)
++        if (parts.size == 2) parts[0].trim() to parts[1].trim() else null
++    }.toMap()
++    val serial = map["SERIAL"] ?: map["SIRIM"] ?: tokens.first().trim()
++    return ParsedSirimPayload(
++        serial = serial,
++        batch = map["BATCH"],
++        brand = map["BRAND"],
++        model = map["MODEL"],
++        type = map["TYPE"],
++        rating = map["RATING"],
++        size = map["SIZE"]
++    )
++}
+diff --git a/app/src/main/java/com/sirim/scanner/presentation/scan/ScanScreen.kt b/app/src/main/java/com/sirim/scanner/presentation/scan/ScanScreen.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..ee79fb832687bcff80ab2c1861a1c31bf19796f5
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/presentation/scan/ScanScreen.kt
+@@ -0,0 +1,135 @@
++package com.sirim.scanner.presentation.scan
++
++import android.Manifest
++import android.content.pm.PackageManager
++import androidx.activity.compose.rememberLauncherForActivityResult
++import androidx.activity.result.contract.ActivityResultContracts
++import androidx.camera.view.LifecycleCameraController
++import androidx.camera.view.PreviewView
++import androidx.compose.foundation.layout.Arrangement
++import androidx.compose.foundation.layout.Box
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.fillMaxSize
++import androidx.compose.foundation.layout.padding
++import androidx.compose.material3.Button
++import androidx.compose.material3.ExperimentalMaterial3Api
++import androidx.compose.material3.Scaffold
++import androidx.compose.material3.SnackbarHost
++import androidx.compose.material3.SnackbarHostState
++import androidx.compose.material3.Text
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.LaunchedEffect
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.remember
++import androidx.compose.runtime.rememberCoroutineScope
++import androidx.compose.runtime.setValue
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.platform.LocalContext
++import androidx.compose.ui.platform.LocalLifecycleOwner
++import androidx.compose.ui.unit.dp
++import androidx.compose.ui.viewinterop.AndroidView
++import androidx.core.content.ContextCompat
++import androidx.lifecycle.compose.collectAsStateWithLifecycle
++import kotlinx.coroutines.launch
++
++@OptIn(ExperimentalMaterial3Api::class)
++@Composable
++fun ScanScreen(viewModel: ScanViewModel) {
++    val context = LocalContext.current
++    val lifecycleOwner = LocalLifecycleOwner.current
++    val snackbarHostState = remember { SnackbarHostState() }
++    val scope = rememberCoroutineScope()
++    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
++
++    var hasPermission by remember {
++        mutableStateOf(
++            ContextCompat.checkSelfPermission(
++                context,
++                Manifest.permission.CAMERA
++            ) == PackageManager.PERMISSION_GRANTED
++        )
++    }
++
++    val permissionLauncher = rememberLauncherForActivityResult(
++        ActivityResultContracts.RequestPermission()
++    ) { granted ->
++        hasPermission = granted
++    }
++
++    LaunchedEffect(Unit) {
++        if (!hasPermission) {
++            permissionLauncher.launch(Manifest.permission.CAMERA)
++        }
++    }
++
++    val cameraController = remember {
++        LifecycleCameraController(context).apply {
++            setImageAnalysisAnalyzer(
++                ContextCompat.getMainExecutor(context),
++                MlKitBarcodeAnalyzer { barcodes ->
++                    val first = barcodes.firstOrNull()?.rawValue ?: return@MlKitBarcodeAnalyzer
++                    parseSirimPayload(first)?.let { payload ->
++                        viewModel.onBarcodeParsed(payload)
++                    }
++                }
++            )
++        }
++    }
++
++    LaunchedEffect(hasPermission) {
++        if (hasPermission) {
++            cameraController.bindToLifecycle(lifecycleOwner)
++        }
++    }
++
++    LaunchedEffect(uiState.statusMessage) {
++        uiState.statusMessage?.let { message ->
++            scope.launch { snackbarHostState.showSnackbar(message) }
++            viewModel.onStatusConsumed()
++        }
++    }
++
++    Scaffold(
++        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
++    ) { paddingValues ->
++        if (!hasPermission) {
++            PermissionRationale(
++                modifier = Modifier
++                    .fillMaxSize()
++                    .padding(paddingValues),
++                onRequest = { permissionLauncher.launch(Manifest.permission.CAMERA) }
++            )
++        } else {
++            Box(
++                modifier = Modifier
++                    .fillMaxSize()
++                    .padding(paddingValues)
++            ) {
++                AndroidView(
++                    modifier = Modifier.fillMaxSize(),
++                    factory = { context ->
++                        PreviewView(context).apply {
++                            controller = cameraController
++                        }
++                    }
++                )
++            }
++        }
++    }
++}
++
++@Composable
++private fun PermissionRationale(modifier: Modifier = Modifier, onRequest: () -> Unit) {
++    Column(
++        modifier = modifier,
++        horizontalAlignment = Alignment.CenterHorizontally,
++        verticalArrangement = Arrangement.Center
++    ) {
++        Text(text = "Camera permission is required to scan SIRIM QR codes.")
++        Button(onClick = onRequest, modifier = Modifier.padding(top = 16.dp)) {
++            Text(text = "Grant Permission")
++        }
++    }
++}
+diff --git a/app/src/main/java/com/sirim/scanner/presentation/scan/ScanViewModel.kt b/app/src/main/java/com/sirim/scanner/presentation/scan/ScanViewModel.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..27a80eb6cf4c70f1e04ae8de6db2ee50143fea52
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/presentation/scan/ScanViewModel.kt
+@@ -0,0 +1,62 @@
++package com.sirim.scanner.presentation.scan
++
++import androidx.lifecycle.ViewModel
++import androidx.lifecycle.viewModelScope
++import com.sirim.scanner.domain.model.SirimRecord
++import com.sirim.scanner.domain.usecase.SaveRecordUseCase
++import kotlinx.coroutines.flow.MutableStateFlow
++import kotlinx.coroutines.flow.StateFlow
++import kotlinx.coroutines.launch
++
++class ScanViewModel(
++    private val saveRecord: SaveRecordUseCase
++) : ViewModel() {
++
++    private val _uiState = MutableStateFlow(ScanUiState())
++    val uiState: StateFlow<ScanUiState> = _uiState
++
++    fun onBarcodeParsed(parsed: ParsedSirimPayload) {
++        if (_uiState.value.isSaving) return
++        viewModelScope.launch {
++            _uiState.value = _uiState.value.copy(isSaving = true)
++            val now = System.currentTimeMillis()
++            val record = SirimRecord(
++                sirimSerialNumber = parsed.serial,
++                batchNumber = parsed.batch,
++                brandTrademark = parsed.brand,
++                model = parsed.model,
++                type = parsed.type,
++                rating = parsed.rating,
++                size = parsed.size,
++                createdAt = now,
++                updatedAt = now
++            )
++            saveRecord(record)
++            _uiState.value = _uiState.value.copy(
++                isSaving = false,
++                lastSavedSerial = parsed.serial,
++                statusMessage = "Record saved"
++            )
++        }
++    }
++
++    fun onStatusConsumed() {
++        _uiState.value = _uiState.value.copy(statusMessage = null)
++    }
++}
++
++data class ScanUiState(
++    val isSaving: Boolean = false,
++    val lastSavedSerial: String? = null,
++    val statusMessage: String? = null
++)
++
++data class ParsedSirimPayload(
++    val serial: String,
++    val batch: String? = null,
++    val brand: String? = null,
++    val model: String? = null,
++    val type: String? = null,
++    val rating: String? = null,
++    val size: String? = null
++)
+diff --git a/app/src/main/java/com/sirim/scanner/presentation/theme/Color.kt b/app/src/main/java/com/sirim/scanner/presentation/theme/Color.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..219b6c13e323fcf93efbbcdd876cfa070a559fbb
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/presentation/theme/Color.kt
+@@ -0,0 +1,8 @@
++package com.sirim.scanner.presentation.theme
++
++import androidx.compose.ui.graphics.Color
++
++val PrimaryGreen = Color(0xFF006C4F)
++val SecondaryBlue = Color(0xFF005B82)
++val BackgroundGray = Color(0xFFF5F5F5)
++val SurfaceWhite = Color(0xFFFFFFFF)
+diff --git a/app/src/main/java/com/sirim/scanner/presentation/theme/Theme.kt b/app/src/main/java/com/sirim/scanner/presentation/theme/Theme.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..f3af4e70c1ad47b2b09c6e05a0ad02eebb5ee256
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/presentation/theme/Theme.kt
+@@ -0,0 +1,37 @@
++package com.sirim.scanner.presentation.theme
++
++import androidx.compose.foundation.isSystemInDarkTheme
++import androidx.compose.material3.MaterialTheme
++import androidx.compose.material3.darkColorScheme
++import androidx.compose.material3.lightColorScheme
++import androidx.compose.runtime.Composable
++import androidx.compose.ui.graphics.Color
++
++private val LightColors = lightColorScheme(
++    primary = PrimaryGreen,
++    onPrimary = Color.White,
++    secondary = SecondaryBlue,
++    background = BackgroundGray,
++    surface = SurfaceWhite,
++)
++
++private val DarkColors = darkColorScheme(
++    primary = PrimaryGreen,
++    onPrimary = Color.White,
++    secondary = SecondaryBlue,
++    background = Color(0xFF101010),
++    surface = Color(0xFF1F1F1F),
++)
++
++@Composable
++fun SirimScannerTheme(
++    useDarkTheme: Boolean = isSystemInDarkTheme(),
++    content: @Composable () -> Unit
++) {
++    val colors = if (useDarkTheme) DarkColors else LightColors
++    MaterialTheme(
++        colorScheme = colors,
++        typography = Typography,
++        content = content
++    )
++}
+diff --git a/app/src/main/java/com/sirim/scanner/presentation/theme/Type.kt b/app/src/main/java/com/sirim/scanner/presentation/theme/Type.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..e196a9a698c1d94ad7643c9f05d7700a5eab2728
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/presentation/theme/Type.kt
+@@ -0,0 +1,5 @@
++package com.sirim.scanner.presentation.theme
++
++import androidx.compose.material3.Typography
++
++val Typography = Typography()
+diff --git a/app/src/main/java/com/sirim/scanner/sync/Scheduler.kt b/app/src/main/java/com/sirim/scanner/sync/Scheduler.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..30345949599cd9aacf12078da56da5ea3553fd8b
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/sync/Scheduler.kt
+@@ -0,0 +1,25 @@
++package com.sirim.scanner.sync
++
++import android.content.Context
++import androidx.work.ExistingPeriodicWorkPolicy
++import androidx.work.PeriodicWorkRequestBuilder
++import androidx.work.WorkManager
++import java.util.concurrent.TimeUnit
++
++class Scheduler(
++    private val context: Context
++) {
++    fun scheduleSync() {
++        val workRequest = PeriodicWorkRequestBuilder<SirimSyncWorker>(12, TimeUnit.HOURS)
++            .build()
++        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
++            WORK_NAME,
++            ExistingPeriodicWorkPolicy.UPDATE,
++            workRequest
++        )
++    }
++
++    companion object {
++        private const val WORK_NAME = "sirim_sync"
++    }
++}
+diff --git a/app/src/main/java/com/sirim/scanner/sync/SirimSyncWorker.kt b/app/src/main/java/com/sirim/scanner/sync/SirimSyncWorker.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..7ee35b49583f136c23772c7060f7464c7b6378a6
+--- /dev/null
++++ b/app/src/main/java/com/sirim/scanner/sync/SirimSyncWorker.kt
+@@ -0,0 +1,18 @@
++package com.sirim.scanner.sync
++
++import android.content.Context
++import androidx.work.CoroutineWorker
++import androidx.work.WorkerParameters
++import kotlinx.coroutines.delay
++
++class SirimSyncWorker(
++    appContext: Context,
++    workerParams: WorkerParameters
++) : CoroutineWorker(appContext, workerParams) {
++
++    override suspend fun doWork(): Result {
++        // Placeholder for network synchronization logic.
++        delay(2_000)
++        return Result.success()
++    }
++}
+diff --git a/app/src/main/res/drawable/ic_launcher_foreground.xml b/app/src/main/res/drawable/ic_launcher_foreground.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..43db50e6c3c2b54b285d8deb77f273bfec112009
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_launcher_foreground.xml
+@@ -0,0 +1,18 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="108dp"
++    android:height="108dp"
++    android:viewportWidth="108"
++    android:viewportHeight="108">
++    <group
++        android:scaleX="0.5"
++        android:scaleY="0.5"
++        android:translateX="27"
++        android:translateY="27">
++        <path
++            android:fillColor="#FFFFFF"
++            android:pathData="M54,8a46,46 0,1 1,-0.1 0zM30,30h48v48H30z" />
++        <path
++            android:fillColor="#006C4F"
++            android:pathData="M42,42h24v24H42z" />
++    </group>
++</vector>
+diff --git a/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml b/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..491b5dfd694c4a20cc6b7f790a18bf4f529336e7
+--- /dev/null
++++ b/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
++    <background android:drawable="@color/md_theme_primary" />
++    <foreground android:drawable="@drawable/ic_launcher_foreground" />
++</adaptive-icon>
+diff --git a/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml b/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..491b5dfd694c4a20cc6b7f790a18bf4f529336e7
+--- /dev/null
++++ b/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
++    <background android:drawable="@color/md_theme_primary" />
++    <foreground android:drawable="@drawable/ic_launcher_foreground" />
++</adaptive-icon>
+diff --git a/app/src/main/res/mipmap-hdpi/ic_launcher.png b/app/src/main/res/mipmap-hdpi/ic_launcher.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..eb0506089864a07cb2c6ae0a15c0d7dcc24afe09
+GIT binary patch
+literal 1366
+zcmbW1`#%#30L7QcyV;~Gnz5}~KD$aUkC16?Rt+~MnW3<x<$A<6d1i*ZB3$mg!#wiX
+z=z7c@c~@LqEwiZ*rJ_jEw&=Ql!o5G7b3UK*)A`|izR6AwI88M@H2?shiMPjG*h>3<
+zrLtqoiAzm506+<X$Dm#41xxIh^F%-0flg&DrDy8lMoG{zq`I@(JquqoW2T7$D(zab
+zG*pS=KKWhfI{t*38kcm6V(C}mdvrYi4iY{g)(uLu7*j{6Bt24^_iVNGFyDAou=mhP
+zkVS*LWL5gf>Jy{*ZAbBH(Rxwn$3L@ZS)Cehytuc-%FAAfN}xtVh25C0+bV8a+tgv+
+zXhl>~?Efx<wDQkqAu#8Q5?bGJ>A@a{JNoI}eoS@Li`}}z`=7n4#R<KHt<ijqeL0r9
+zE@qcB)s7pFe6B)Jy=2nZhvFZBiDT5>IzACugY2(<<@g%AM9A!U2f0@Tbz-EgU|c^3
+zG93y|EZCfx@3R+iM~!WC(HXF(M|i89J)FtnQa(pgDcEl0yTbxV>rW;O%=}n%W6LHb
+zlPO4G3GM6tVTS$<2qiLeHK(z|?s>`aRaY_UZ7|o8qJ*_b1LrypYW#lcMiFr_<eCjH
+zdJ-5_Xn<`}4TO_TADgMn-0NPErPAr`46(~;FU~;0&!&KgtJK&DI@P@u1ahVv{2JOw
+zv-O`o=3z1nmBq^5XlM40yl~`3HLMx9mN&2}<TLK0qARxOr#ibl__qrWgwF^^rFoFO
+z7UdCd9FA^QwX<mJ5BeUW3WXIlkd2|cpT8z*p|cPN{~(<d?+P)fz<qp_-`!;HOm`)c
+zo%yPS{{8gU2;}T=C56b4!+bUWo_MDt5x7Ik>&0uLiHfnm?w1Pv>t^R^#tA~LBk}1v
+zbKU{ANw8e=P!Ra4iCtakPQT-3PSG5Ni?#J-PF_rwT(jo=8aaLuF>fKL;xpf~0*F#M
+z3^Tgo6=O?x(gk<V)`=sVUoMYDz%6}EVqeO0vd%(wdYb!=@7uiqNfN_bc1&@~1YlBn
+zVAImHD%0Z%59PBYSQF9xwFAwbYqT~X@N`DE%Oc@%Zwqv9*Wtv=H6Pew!k{G|s4DrX
+zOdzd)9~lLbp~4>+D$nS{8@&f$<(t{8a}~cSTTSOxkBPK89m2?XUVLGpwb)YP@|O2x
+z1F=~<Qy+}$oy)gRjsj{IvrGK1Q%wzh$yKlu**HzWpm6@OpG<F%*J@;)$&vQwV!wZr
+z;89XaHIdE7s;8x}hDsa8d#+BJr;_$0wUK;e<W5i3<nEKd;O)|-+w2sVw$_p|Q)cEC
+zj!j3CbL*o=0v#PkO0I`pY7c61&6s<z9$Y$CMwH{!p99Z+^9I3?U7=P2&&_>jkEYzs
+z>CjJsgF$n0t79g5<|2vD5YlXDXL|1#5J-CAqBo4q6BABMWc%%5XHZX*5-)*hVZnXv
+z6Bk_4IEU<BDR2E4JN3n_myiLuS?oc6dH2Kdsb9O|R+YI%=(f>A8J?^j2F~evm43)a
+zWh<fCoyu_S3yzi5Pq?3^qIFXVck=GX!)+L^eTWRGA!f8~cGaJ1DtgA@Z8~<eg{lT<
+zJgf<53Cqje3}q1`(Qa0r%j|MvGs6Y&xsy3@spGe_z{_BYVuFz<My>yrtfxn~9ga&?
+z1T=>?&pJ3;*H2^{wIG0P?J12nNtkS0_~yEsPLqO<wSkQspT(?8X3IC`niCF$K)=MW
+gI)#S+kuB5Ep8E+!t^wVBTf79|&p2S}?YwXQ1G0&L{Qv*}
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/mipmap-hdpi/ic_launcher_round.png b/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..1adef1a21ebd2d180ab3901eed10c6390a45c1da
+GIT binary patch
+literal 1587
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/mipmap-mdpi/ic_launcher.png b/app/src/main/res/mipmap-mdpi/ic_launcher.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..c8006a2eaabaa0806816d3e79cb1aa82a127dec6
+GIT binary patch
+literal 935
+zcmV;Y16cftP)<h;3K|Lk000e1NJLTq001xm001xu1^@s6R|5Hm000ASNkl<Zc%1E-
+zUrbY19LGPU7}H9N2*?BmB@&|88YD(7Zm=}?;5Prn2mfSIQ4BgGBAPuIH733+{$Vm>
+z{7)P+X2}K?6OBZJy154NA5p*+A`ul(QI^>nZc@3oKA7F42*P1;HzfD-bk4cw{Lc5&
+z)7#tR8WL96f{b9ov<~oJ(FL?d7tk7AKx=dXt<eRvMi<Z;T|jGe0j<#mv}VK$gb!!Y
+z!ddfKnzNWGN$FTjR-}N0ug6D6cPFh+TPd$OMdPC;0GyL%@!Qs4-mB3o%lLYHc-y_W
+zYtQoQwF+cK{`dm>@^`Z|dvVB^#T0?X6hT6CJTua!bEmal6&P@1qmglzD6%Fy$(rnB
+zc6t^Y4i|~W5fhl5o~4HOORw2@bQ9OTbtplF#F#`J$#&+={E9$tV89w{4y>j6_C*q+
+z<Jq(7dvYAvz`IjDUR}oBhxb07fNSa(YWr%#?_8>{QTxs9Ei|{cP~kZ<q*@)_o$RSB
+zQ3U`pQ>O_F2;Ib1vsG=+NSls5d5X|xeR=**S7;c6_-~5P3AA-RQrmH3<EY+sj)%|N
+zxbCf^uK5OkH2q0epHLs-lc>0m{)5g3B5?r06R4^^ixiMT#!}*JEX!F!X+a6MN^3c|
+zu9V0zk%QKXA2)&T7HwAh4Q-8FYx0Q10R&H=qq~#!hYH!ddN(oF==ZLN8NyiTTtI}$
+zLf-!TerufAcr>IR3<f!W^8(v`-hmQSMB=>LQ*^<l`Wl>DKBw?VF_j*7zh9Z$3>Tlq
+zBo4Wz)ojIR9M&Ugcu!&}AmOg9qUhLWGK*$1XZu_(-@OttCwY8wziZbVSW8NN8p}&o
+z;p_2XFc`?Te@1z68R16b|0B?szn*ycq3XwwF<*~w!1-@_-*DyLRd$}<rH(mlcJgvp
+z3hyl>u;J_V{8U`Va@RLZwK<55jAc~#D3W56SU0yoo%iC^OYT3pKWM#5kDKQ9mXP}9
+z(PoiIVmGmQw29md7r7a(0q4ky%+~Vl^vZ+(uTg>u``r6EUU(RQ7;7}E=j3tl+@T?7
+z5)!EJoWU>o$(%Ti)c91QBBB^OCK6eZdHVM=ZnWH_?BYq99uNNM|I3A2)iks<;;`8P
+z`1Z>J%4<&Hm;6IoZ_r;cX^bwQHM)S-=mJ`!3uuilpfw|2;4Q+H5l4FqTTTD~002ov
+JPDHLkV1o3_$xZ+O
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/mipmap-mdpi/ic_launcher_round.png b/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..42db8a9ed220b46719f59d4c44c85b864ecd0063
+GIT binary patch
+literal 1111
+zcmV-d1gQIoP)<h;3K|Lk000e1NJLTq001xm001xu1^@s6R|5Hm000CYNkl<Zc%1E;
+zT}+c#7{`BYF{YIk5f~dVsF9F~twCbc;s#5D7w*&S!nrJNC<dJo87{jpb6MieqLayt
+z(K$ypFw2q+EG8O>hUw-SMBRu2t`LcJQk-loTf5Mt(smc54K4jT75d@!zk1L6p7T7v
+z|9Q@P-nSnTW>~pzsNLcESX#`InacOjfg%A8r-v~V^}v|`_g6GVga^z9xW7b<NJRq2
+z0$wyvL{4J`9!TM;5w-&HgpVYDNCWYP_b3!cPy>kq?@=(GfCdr`-lITVLc35RYMOyW
+zoqdn|`J|yPCaR`#J~~S%S!UlO4{y>}Kmy4(`%{(l75Lvkyd_QM^$(B|&7gIwUSdPV
+zdY0rDqm-+#JM37;tysoJ7`it^bLR>A?(_qodukQm?*4jOj0vX`>$nxuun9xgDZaVX
+ziqqwseFF!o_pzaTz0WzNJQbxpmE4RRRunDg=b;|2fuM<HG8QP)DO;?gY_X2j#bxX`
+zS|^GlW?*%3nHSz>|A(E&-sZBY8<*QfUS=NJ0u3*&d>+SyBWR2*hqlu3(>Zc8a@fD=
+zLn^f8z+_dAcQkSR_Kn#ypkMl|_xNJ(_nhzP^tK0v2N@V1q}6ybqF9!(5%#w=cntuQ
+z7A_MuAhZjq6e{oWilXIc3YG{Z^Vj{qMtxx<;+vvS1<a#&yvNz|v+3A-n%noyTsC#n
+zJ#d8|`hR594=R)%PtW#g-x|3kf&&OvpuOu9c8A^P+`?=%uT{KCV@(6s8oM~Wt&y~O
+zX<=jKEO>%<U)kkt_nP~-)Nd5Q0R$^x85?2yky<|5ypK#(#<c5FiIjD^mr0c?sXAC4
+zFvjOQkNLFSZZ~JHp5?uk_i?#hA~=&dMZeBF-_wciooA^1w4OGjA>fj!EYb61W?sZG
+zRSFd{SyYdt=w2o44m*afcIrOcMQPni*6dl!ch@iY^eK3(AmG?7hqkh?x`>Spo3M^s
+zkw_$zYo4aLzKIl>EH(!G^~+roAGd$vbIv+$4ch;~!~-texX1@z?e(71sx?$qzA2nr
+z$iR*lw)16u6C3rfvsA4mD=mvTDRaor%4gf!8gIYf|NeuUcW;J`*Jd;@Fg)lJUolr9
+zf;4#(TUyMLNM7m`bLCW)=&3Bx2kql@IoaL3hY4r+_ZpYm#R0=Xj@KRqAXAmW<~3Cu
+zK7Ax2cuR{}B6R1p8c$-g+bCVMjKZ8k(o@r!KQ9fZ%gMbzf8)yFRhrIyLI1DeXWyf<
+z*E;Am_n}p50C?-U8k###V6)pI8t=0MCDW_5XZKA04>VI7Gx_7&Y-%d!v<f7;34gvv
+zYYBOjs8tBW6|@40W+E6*$R(60CPHz9y$9lLB3ynUxL7{uBAqy)T_{%75Xtl3`>%w*
+d;{9)xe*t;Rc|Ueqj|cz&002ovPDHLkV1nr>8Eyao
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/mipmap-xhdpi/ic_launcher.png b/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..1767e4120b1974ef4e5ecb8482de67925cbd7bcf
+GIT binary patch
+literal 1853
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png b/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..0102ced5a458d97fe613f72b15466922ba926d5d
+GIT binary patch
+literal 2183
+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
+JPDHLkV1fchEZqPA
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/mipmap-xxhdpi/ic_launcher.png b/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..0e009aed12b239047cb94d3f815461ef96ee5393
+GIT binary patch
+literal 2798
+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
+LXkk#RcQ5uo^?W<9
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png b/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..16e7bbd0e4aaddc39435ded97c417adc7672ce24
+GIT binary patch
+literal 3278
+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
+K>b}*skNFQ<xJr)z
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png b/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..ee0bd80324e472b0f65aae6351a68fda27553b4b
+GIT binary patch
+literal 3647
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png b/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..4feb1578e75d391f88ebdac1669fefe76962f9f5
+GIT binary patch
+literal 4366
+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
+NNAr<JsoIM-{|65(Sl|Ev
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/values/colors.xml b/app/src/main/res/values/colors.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..7c024a524dd610d0fe0caac5eeeb195a43afa507
+--- /dev/null
++++ b/app/src/main/res/values/colors.xml
+@@ -0,0 +1,7 @@
++<resources>
++    <color name="md_theme_primary">#006C4F</color>
++    <color name="md_theme_onPrimary">#FFFFFF</color>
++    <color name="md_theme_secondary">#005B82</color>
++    <color name="md_theme_background">#F5F5F5</color>
++    <color name="md_theme_surface">#FFFFFF</color>
++</resources>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..08ff0728686322f6d4bccd6760ee9080546dff40
+--- /dev/null
++++ b/app/src/main/res/values/strings.xml
+@@ -0,0 +1,7 @@
++<resources>
++    <string name="app_name">SIRIM Scanner</string>
++    <string name="scan_title">Scan QR Code</string>
++    <string name="records_title">Records</string>
++    <string name="export_title">Export</string>
++    <string name="request_camera_permission">Camera access is required to scan SIRIM QR codes.</string>
++</resources>
+diff --git a/app/src/main/res/values/themes.xml b/app/src/main/res/values/themes.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..da29ee197c406f69c0ea62666d7f3e81868f996a
+--- /dev/null
++++ b/app/src/main/res/values/themes.xml
+@@ -0,0 +1,5 @@
++<resources xmlns:tools="http://schemas.android.com/tools">
++    <style name="Theme.SirimScanner" parent="Theme.Material3.DayNight.NoActionBar">
++        <item name="android:statusBarColor" tools:targetApi="l">@android:color/transparent</item>
++    </style>
++</resources>
+diff --git a/app/src/main/res/xml/backup_rules.xml b/app/src/main/res/xml/backup_rules.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..5c1c383a4f8855b97a759f0d2145aab1be79d902
+--- /dev/null
++++ b/app/src/main/res/xml/backup_rules.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<data-extraction-rules>
++    <cloud-backup>
++        <include domain="database" path="." />
++        <include domain="sharedpref" path="." />
++        <exclude domain="database" path="databases/sensitive" />
++    </cloud-backup>
++    <device-transfer>
++        <include domain="database" path="." />
++        <include domain="sharedpref" path="." />
++    </device-transfer>
++</data-extraction-rules>
+diff --git a/app/src/main/res/xml/file_paths.xml b/app/src/main/res/xml/file_paths.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..8efc1539f94d7c22a6ecb6a1e7429395136822db
+--- /dev/null
++++ b/app/src/main/res/xml/file_paths.xml
+@@ -0,0 +1,3 @@
++<paths xmlns:android="http://schemas.android.com/apk/res/android">
++    <cache-path name="exports" path="exports/" />
++</paths>
+diff --git a/app/src/main/res/xml/network_security_config.xml b/app/src/main/res/xml/network_security_config.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..238dd4727c0aee9313b3418ad4070917012b9e56
+--- /dev/null
++++ b/app/src/main/res/xml/network_security_config.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<network-security-config>
++    <domain-config cleartextTrafficPermitted="false">
++        <domain includeSubdomains="true">your-api-domain.com</domain>
++    </domain-config>
++</network-security-config>
+diff --git a/build.gradle.kts b/build.gradle.kts
+new file mode 100644
+index 0000000000000000000000000000000000000000..7c1aaacdcbc92dc18fea4f54340f2f2a9606b5da
+--- /dev/null
++++ b/build.gradle.kts
+@@ -0,0 +1,5 @@
++plugins {
++    id("com.android.application") version "8.3.0" apply false
++    id("org.jetbrains.kotlin.android") version "1.9.22" apply false
++    id("com.google.devtools.ksp") version "1.9.22-1.0.16" apply false
++}
+diff --git a/docs/sirim_qr_code_scanner_mvp_plan.md b/docs/sirim_qr_code_scanner_mvp_plan.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..2e973e5e6307fcf6f91055e6878de7728100ad8b
+--- /dev/null
++++ b/docs/sirim_qr_code_scanner_mvp_plan.md
+@@ -0,0 +1,300 @@
++# SIRIM QR Code Scanner Android App - Comprehensive MVP Plan
++
++---
++
++## Executive Summary
++
++This comprehensive plan outlines the development of a sophisticated Android application designed to capture and process Malaysia SIRIM QR codes using advanced OCR technology. The application will provide robust offline functionality with optional cloud synchronization, secure authentication, and multiple data export formats. Built for Android 15, the app leverages the latest platform capabilities to deliver enterprise-grade security and performance.
++
++---
++
++# System Architecture and Technical Specifications
++
++## 1. System Architecture
++
++The proposed system architecture for the SIRIM QR Code Scanner application follows a modern, multi-layered approach based on Google's recommended Android app architecture guidelines. This ensures a scalable, maintainable, and testable codebase optimized for Android 15's enhanced capabilities. The architecture comprises three primary layers: the Presentation Layer, the Domain Layer, and the Data Layer.
++
++### 1.1. Presentation Layer
++
++This layer handles the application's user interface and user interactions, built using **Jetpack Compose** with Android 15's enhanced UI capabilities. The **Model-View-ViewModel (MVVM)** architectural pattern separates UI logic from business logic, taking advantage of Android 15's improved lifecycle management and state handling.
++
++The Presentation Layer utilizes **Composable Functions** as UI elements that observe data from ViewModels and render content on screen. **ViewModels** manage UI-related data in a lifecycle-conscious manner, exposing data through observable holders like `StateFlow` and handling user actions by calling appropriate business logic in the Domain Layer.
++
++### 1.2. Domain Layer
++
++The Domain Layer encapsulates the core business logic, remaining independent of both UI and data sources. This layer consists of **Use Cases** (Interactors) that represent discrete business operations such as QR code scanning, data storage, and file export operations.
++
++### 1.3. Data Layer
++
++The Data Layer provides data access through **Repositories** that abstract data sources from the application. It includes both **Local Data Sources** implemented using Room persistence library with Android 15's enhanced SQLite performance, and optional **Remote Data Sources** for cloud synchronization using Retrofit with Android 15's improved network security features.
++
++## 2. Technical Specifications
++
++| Category | Technology/Specification | Justification |
++| :--- | :--- | :--- |
++| **Platform** | Android 15 (Kotlin) | Latest Android platform with enhanced security, performance improvements, and modern development features. Kotlin remains the officially recommended language. |
++| **Minimum SDK** | API Level 35 (Android 15) | Targets the latest Android version for maximum security, performance, and access to cutting-edge features like enhanced biometric authentication and improved camera APIs. |
++| **Target SDK** | API Level 35 (Android 15) | Ensures compliance with Google Play Store requirements and access to all Android 15 features. |
++| **Architecture Pattern** | MVVM with Clean Architecture | Proven pattern enhanced by Android 15's improved lifecycle management and state preservation capabilities. |
++| **UI Toolkit** | Jetpack Compose (Latest) | Modern declarative UI toolkit with Android 15 optimizations for better performance and new UI components. |
++| **QR Code Scanning & OCR** | Google ML Kit (Latest) | Enhanced ML Kit with Android 15 optimizations, improved accuracy, and better camera integration. |
++| **Camera Integration** | CameraX with Android 15 enhancements | Leverages Android 15's Low Light Boost and improved camera controls for better QR code scanning in various lighting conditions. |
++| **Local Storage** | Room Database (Latest) | Enhanced Room with Android 15's improved SQLite performance and better encryption support. |
++| **Data Export** | | |
++| &nbsp;&nbsp;&nbsp;&nbsp;Excel | Apache POI (Latest) | Mature library with Android 15 compatibility for Excel file generation. |
++| &nbsp;&nbsp;&nbsp;&nbsp;PDF | iText 7 Community | Enhanced PDF generation with Android 15's improved PDF rendering capabilities. |
++| &nbsp;&nbsp;&nbsp;&nbsp;ZIP | `java.util.zip` + Android 15 enhancements | Standard library with Android 15's improved compression algorithms. |
++| **Authentication** | Android 15 Enhanced Biometric API | Utilizes Android 15's improved biometric authentication with better security and user experience. |
++| **Security** | | |
++| &nbsp;&nbsp;&nbsp;&nbsp;Data at Rest | Android 15 Enhanced Encryption | Leverages Android 15's improved encryption capabilities and hardware security module integration. |
++| &nbsp;&nbsp;&nbsp;&nbsp;Key Management | Android Keystore (Enhanced) | Android 15's enhanced Keystore with better hardware-backed security. |
++| &nbsp;&nbsp;&nbsp;&nbsp;App Security | Android 15 Theft Protection | Integrates with Android 15's new theft protection features for enhanced device security. |
++| **Optional Online Sync** | | |
++| &nbsp;&nbsp;&nbsp;&nbsp;Backend API | RESTful API (Ktor/Spring Boot) | Modern API frameworks with Android 15's enhanced network security protocols. |
++| &nbsp;&nbsp;&nbsp;&nbsp;Database | PostgreSQL/MySQL | Robust database systems compatible with Android 15's synchronization capabilities. |
++| &nbsp;&nbsp;&nbsp;&nbsp;Synchronization | WorkManager (Enhanced) | Android 15's improved WorkManager with better background processing and battery optimization. |
++
++---
++
++# Feature Specifications and User Experience Design
++
++## 1. Core Features
++
++### 1.1. Enhanced Authentication System
++
++The authentication system leverages Android 15's advanced security features to provide multiple layers of protection. Users can register with secure credentials following enhanced password policies that integrate with Android 15's password management improvements. The system supports **biometric authentication** using Android 15's enhanced BiometricPrompt API, which provides improved fingerprint and face recognition capabilities with better security and user experience.
++
++**Session management** implements secure, short-lived JSON Web Tokens stored in Android 15's enhanced Keystore system. The application includes automatic session timeout and secure token refresh mechanisms that work seamlessly with Android 15's improved background processing capabilities.
++
++### 1.2. Advanced QR Code Scanning and OCR
++
++The scanning functionality utilizes Google ML Kit's latest capabilities enhanced for Android 15, providing **real-time scanning** with improved accuracy and performance. The system leverages Android 15's **Low Light Boost** feature for better QR code recognition in challenging lighting conditions, automatically adjusting camera exposure for optimal scanning results.
++
++**Auto-zoom functionality** has been enhanced with Android 15's improved camera controls, providing more precise focusing and better success rates. The application includes **data verification** screens that allow users to review and edit extracted information before storage, with Android 15's improved input validation and error handling.
++
++### 1.3. Comprehensive Data Management
++
++All scanned data is stored locally using Room database with Android 15's enhanced SQLite performance and security features. The **data viewing interface** provides intuitive list displays with advanced **search and filtering** capabilities that leverage Android 15's improved text processing and search algorithms.
++
++**Record management** includes detailed views for individual records, with editing and deletion capabilities protected by confirmation dialogs. The system implements Android 15's enhanced data protection features to ensure secure local storage and prevent unauthorized access.
++
++### 1.4. Multi-Format Data Export
++
++The export system supports multiple formats including **Excel (.xlsx)**, **PDF (.pdf)**, and **ZIP archives**. Users can customize exports by selecting specific fields and records, with the system leveraging Android 15's improved file handling and sharing capabilities.
++
++**Sharing functionality** integrates with Android 15's enhanced sharing system, providing seamless file distribution through email, messaging apps, and cloud storage services with improved security and privacy controls.
++
++### 1.5. Optional Cloud Synchronization
++
++The synchronization system provides both **manual and automatic sync** options, utilizing Android 15's enhanced WorkManager for efficient background processing. **Conflict resolution** implements a sophisticated last-write-wins strategy with timestamp-based decision making.
++
++All **API communication** uses HTTPS with Android 15's enhanced TLS implementation and certificate pinning for maximum security during data transmission.
++
++## 2. User Experience Design
++
++### 2.1. Modern Interface Design
++
++The user interface follows Android 15's Material Design 3 guidelines, providing a clean, intuitive experience optimized for the latest platform capabilities. The **onboarding process** introduces key features with clear explanations of permissions and functionality.
++
++### 2.2. Streamlined Workflow
++
++The **main dashboard** serves as a central hub with quick access to all features, prominently displaying a scan button for immediate QR code capture. **Recent activity summaries** provide users with quick insights into their scanning history and synchronization status.
++
++### 2.3. Efficient Scanning Experience
++
++The **scanning interface** provides real-time feedback with clear visual indicators and progress updates. Android 15's enhanced camera capabilities ensure optimal performance across various lighting conditions and device orientations.
++
++### 2.4. Organized Data Management
++
++The **record management interface** presents data in clear, organized formats with powerful sorting and filtering options. The **export wizard** guides users through the process of selecting records, choosing formats, and sharing files with minimal complexity.
++
++---
++
++# Security Framework and Data Protection Strategy
++
++## 1. Enhanced Authentication and Authorization
++
++The application implements a comprehensive security framework leveraging Android 15's advanced security features. **Strong password policies** are enforced during registration, requiring complex passwords that integrate with Android 15's enhanced password validation systems.
++
++**Biometric authentication** utilizes Android 15's improved BiometricPrompt API, providing enhanced security through hardware-backed biometric verification. The system supports multiple biometric modalities with fallback options for devices without specific sensors.
++
++**Secure token management** employs JSON Web Tokens with enhanced encryption, stored in Android 15's improved Keystore system. Token refresh mechanisms ensure continuous security without compromising user experience.
++
++**Role-based access control** architecture supports future scalability, allowing different permission levels for various user roles including administrators, supervisors, and operators.
++
++## 2. Advanced Data Encryption
++
++**Data at rest** protection utilizes Android 15's enhanced encryption capabilities, including improved Jetpack Security libraries with `EncryptedSharedPreferences` and `EncryptedFile` implementations. All sensitive data, including the local database and exported files, receives hardware-backed encryption through Android 15's enhanced Keystore system.
++
++**Data in transit** security implements TLS 1.3 with Android 15's improved network security protocols. Certificate pinning prevents man-in-the-middle attacks, while enhanced HTTPS enforcement ensures all network communications remain secure.
++
++## 3. Comprehensive Security Practices
++
++**Input validation** occurs at multiple levels, preventing common vulnerabilities such as SQL injection and cross-site scripting. Android 15's enhanced validation APIs provide additional protection layers.
++
++**Code obfuscation** utilizes R8 with Android 15 optimizations, making reverse engineering significantly more difficult. **Tamper detection** mechanisms monitor for unauthorized modifications to application code and resources.
++
++**Principle of least privilege** guides all permission requests, with contextual explanations leveraging Android 15's improved permission management system. **Secure logging** practices ensure no sensitive information appears in logs, with production builds completely disabling debug logging.
++
++## 4. Enhanced Dependency Management
++
++**Regular security audits** utilize automated tools including OWASP Dependency-Check and GitHub security alerts. **Automated updates** through Dependabot ensure dependencies remain current with the latest security patches.
++
++**Third-party library vetting** includes comprehensive security assessments, maintenance history reviews, and community reputation analysis before integration.
++
++## 5. Privacy Protection
++
++**Data minimization** principles ensure only essential data collection for application functionality. **Privacy policies** provide clear, comprehensive explanations of data collection, usage, and protection practices, easily accessible within the application.
++
++**User consent** mechanisms obtain explicit permission before collecting personal data or accessing device features, integrating with Android 15's enhanced privacy controls.
++
++---
++
++# Database Schema and Synchronization Architecture
++
++## 1. Local Database Schema (Room with Android 15 Enhancements)
++
++The local database leverages Room persistence library with Android 15's enhanced SQLite performance and security features. The schema efficiently stores SIRIM QR code information with metadata for synchronization and auditing.
++
++### 1.1. Core Data Tables
++
++**SIRIM Records Table** serves as the primary data repository:
++
++| Column Name | Data Type | Constraints | Description |
++| :--- | :--- | :--- | :--- |
++| `id` | `INTEGER` | `PRIMARY KEY`, `AUTOINCREMENT` | Unique record identifier with Android 15 optimization |
++| `sirim_serial_no` | `TEXT` | `NOT NULL`, `UNIQUE` | SIRIM serial number (max 12 characters) for synchronization |
++| `batch_no` | `TEXT` | | Batch number (max 200 characters) |
++| `brand_trademark` | `TEXT` | | Brand/trademark (max 1024 characters) |
++| `model` | `TEXT` | | Product model (max 1500 characters) |
++| `type` | `TEXT` | | Product type (max 1500 characters) |
++| `rating` | `TEXT` | | Product rating (max 600 characters) |
++| `size` | `TEXT` | | Product size (max 1500 characters) |
++| `created_at` | `INTEGER` | `NOT NULL` | Creation timestamp (milliseconds) |
++| `updated_at` | `INTEGER` | `NOT NULL` | Last update timestamp (milliseconds) |
++| `is_synced` | `INTEGER` | `NOT NULL`, `DEFAULT 0` | Synchronization status flag |
++| `device_id` | `TEXT` | | Android 15 device identifier for multi-device sync |
++
++**User Authentication Table**:
++
++| Column Name | Data Type | Constraints | Description |
++| :--- | :--- | :--- | :--- |
++| `id` | `INTEGER` | `PRIMARY KEY`, `AUTOINCREMENT` | Unique user identifier |
++| `username` | `TEXT` | `NOT NULL`, `UNIQUE` | User's username |
++| `password_hash` | `TEXT` | `NOT NULL` | Enhanced hash with Android 15 security |
++| `biometric_enabled` | `INTEGER` | `DEFAULT 0` | Biometric authentication status |
++| `last_login` | `INTEGER` | | Last login timestamp |
++
++## 2. Optional Remote Database Schema
++
++The remote database mirrors local schema structure for seamless synchronization, enhanced with cloud-specific optimizations and multi-user support.
++
++### 2.1. Cloud Database Tables
++
++**Remote SIRIM Records** with enhanced cloud capabilities:
++
++| Column Name | Data Type | Constraints | Description |
++| :--- | :--- | :--- | :--- |
++| `id` | `SERIAL` | `PRIMARY KEY` | Unique cloud record identifier |
++| `sirim_serial_no` | `VARCHAR(12)` | `NOT NULL`, `UNIQUE` | SIRIM serial number |
++| `batch_no` | `VARCHAR(200)` | | Batch number |
++| `brand_trademark` | `VARCHAR(1024)` | | Brand/trademark |
++| `model` | `VARCHAR(1500)` | | Product model |
++| `type` | `VARCHAR(1500)` | | Product type |
++| `rating` | `VARCHAR(600)` | | Product rating |
++| `size` | `VARCHAR(1500)` | | Product size |
++| `created_at` | `TIMESTAMP` | `NOT NULL` | Creation timestamp |
++| `updated_at` | `TIMESTAMP` | `NOT NULL` | Last update timestamp |
++| `user_id` | `INTEGER` | `FOREIGN KEY` | Record owner |
++| `device_id` | `VARCHAR(255)` | | Source device identifier |
++| `sync_version` | `INTEGER` | `DEFAULT 1` | Version control for conflict resolution |
++
++## 3. Enhanced Synchronization Architecture
++
++The synchronization system utilizes Android 15's enhanced WorkManager with improved background processing and battery optimization capabilities.
++
++**Synchronization triggers** support both manual user initiation and automatic background processing. Android 15's enhanced WorkManager ensures reliable execution even when the application is not active, with intelligent scheduling based on device conditions and user patterns.
++
++**Data transfer protocols** use Retrofit with Android 15's enhanced network security features, transferring data in optimized JSON formats with compression and encryption. **Batch processing** capabilities handle large datasets efficiently while maintaining responsiveness.
++
++**Conflict resolution** implements sophisticated algorithms using timestamp comparison and version control. The system maintains data integrity through **last-write-wins** strategies enhanced with user notification systems for significant conflicts.
++
++**Synchronization monitoring** provides real-time status updates and error handling, with automatic retry mechanisms and exponential backoff strategies for network failures.
++
++---
++
++# Implementation Roadmap and Development Plan
++
++## 1. Enhanced Development Methodology
++
++The project follows an **Agile Scrum** methodology optimized for Android 15 development, with two-week sprints designed to leverage the platform's latest capabilities. Each sprint includes comprehensive testing with Android 15's enhanced testing frameworks and continuous integration practices.
++
++## 2. Detailed Sprint Breakdown
++
++### Sprint 1: Foundation and Android 15 Integration (Weeks 1-2)
++
++**Primary objectives** include establishing the Android Studio project with Android 15 SDK configuration and implementing core application architecture using MVVM with Android 15 optimizations. The team will set up Room database with enhanced Android 15 features and implement basic authentication using the platform's improved security APIs.
++
++**Key deliverables** include a functional Android 15 application with modern authentication screens, local database implementation with enhanced security, and core architecture foundation ready for feature development.
++
++### Sprint 2: Advanced QR Code Scanning (Weeks 3-4)
++
++**Development focus** centers on integrating Google ML Kit with Android 15 enhancements, implementing real-time camera preview using CameraX with Low Light Boost capabilities, and developing sophisticated data extraction logic for SIRIM QR codes.
++
++**Sprint deliverables** include a high-performance QR code scanner leveraging Android 15's camera improvements, accurate SIRIM code recognition with enhanced OCR capabilities, and user-friendly data verification interfaces.
++
++### Sprint 3: Comprehensive Data Management (Weeks 5-6)
++
++**Implementation priorities** include developing robust data storage using Room with Android 15 optimizations, creating intuitive user interfaces for record management, and implementing advanced search and filtering capabilities using the platform's enhanced text processing features.
++
++**Expected outcomes** include complete record management functionality, powerful search and filtering systems, and detailed record viewing capabilities with Android 15's improved UI components.
++
++### Sprint 4: Multi-Format Export System (Weeks 7-8)
++
++**Development activities** focus on integrating export libraries (Apache POI, iText) with Android 15 compatibility, implementing customizable export functionality, and developing seamless sharing capabilities using the platform's enhanced sharing system.
++
++**Sprint results** include comprehensive export functionality supporting Excel, PDF, and ZIP formats, customizable field selection systems, and integrated sharing capabilities with Android 15's improved security.
++
++### Sprint 5: Cloud Synchronization (Weeks 9-10)
++
++**Technical implementation** includes backend server development with Android 15-compatible APIs, RESTful API creation for data synchronization, and mobile synchronization logic using enhanced WorkManager capabilities.
++
++**Deliverable targets** include fully functional backend infrastructure, reliable data synchronization between mobile and cloud, and comprehensive conflict resolution systems.
++
++### Sprint 6: Testing and Deployment (Weeks 11-12)
++
++**Quality assurance activities** include comprehensive testing using Android 15's enhanced testing frameworks, performance optimization leveraging platform improvements, and Google Play Store preparation with Android 15 compliance.
++
++**Final deliverables** include production-ready application with comprehensive testing coverage, optimized performance for Android 15, and complete deployment package for Google Play Store distribution.
++
++## 3. Enhanced Timeline and Milestones
++
++| Sprint Phase | Duration | Key Achievements | Android 15 Features Utilized |
++| :--- | :--- | :--- | :--- |
++| **Sprint 1** | 2 Weeks | Foundation, architecture, authentication | Enhanced security APIs, improved Keystore |
++| **Sprint 2** | 2 Weeks | QR scanning, camera integration | Low Light Boost, enhanced camera controls |
++| **Sprint 3** | 2 Weeks | Data management, UI development | Improved UI components, enhanced text processing |
++| **Sprint 4** | 2 Weeks | Export functionality, sharing | Enhanced file handling, improved sharing system |
++| **Sprint 5** | 2 Weeks | Cloud synchronization | Enhanced WorkManager, improved network security |
++| **Sprint 6** | 2 Weeks | Testing, optimization, deployment | Enhanced testing frameworks, performance optimizations |
++| **Total Duration** | **12 Weeks** | **Complete MVP Release** | **Full Android 15 Integration** |
++
++---
++
++## References
++
++[1] [SIRIM QAS International - Implementation of New SIRIM-ST Labels with QR Code](https://www.sirim-qas.com.my/implementation-of-new-sirim-st-labels-with-qr-code/)
++
++[2] [Google ML Kit - Scan barcodes with ML Kit on Android](https://developers.google.com/ml-kit/vision/barcode-scanning/android)
++
++[3] [Android Developers - Features and APIs Overview (Android 15)](https://developer.android.com/about/versions/15/features)
++
++[4] [Android Developers - Save data in a local database using Room](https://developer.android.com/training/data-storage/room)
++
++[5] [Android Developers - Security checklist](https://developer.android.com/privacy-and-security/security-tips)
++
++---
++
++**Document Version:** 2.0  
++**Last Updated:** September 29, 2025  
++**Next Review:** October 15, 2025
+diff --git a/gradle.properties b/gradle.properties
+new file mode 100644
+index 0000000000000000000000000000000000000000..a311f80757f0c8ace244f175a21ff3ce8171b980
+--- /dev/null
++++ b/gradle.properties
+@@ -0,0 +1,4 @@
++org.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8
++android.useAndroidX=true
++android.nonTransitiveRClass=true
++kotlin.code.style=official
+diff --git a/gradle/wrapper/gradle-wrapper.jar b/gradle/wrapper/gradle-wrapper.jar
+new file mode 100644
+index 0000000000000000000000000000000000000000..8b8d56cacb712ffa6acd82852e21836306784038
+GIT binary patch
+literal 42613
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+new file mode 100644
+index 0000000000000000000000000000000000000000..a59520664252cb0fcb9587b12a18e36e6aa70253
+--- /dev/null
++++ b/gradle/wrapper/gradle-wrapper.properties
+@@ -0,0 +1,5 @@
++distributionBase=GRADLE_USER_HOME
++distributionPath=wrapper/dists
++distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
++zipStoreBase=GRADLE_USER_HOME
++zipStorePath=wrapper/dists
+diff --git a/gradlew b/gradlew
+new file mode 100755
+index 0000000000000000000000000000000000000000..97de990bb40fb164c0a4375b3817be2ad053d68a
+--- /dev/null
++++ b/gradlew
+@@ -0,0 +1,249 @@
++#!/bin/sh
++
++#
++# Copyright © 2015-2021 the original authors.
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#      https://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++#
++
++##############################################################################
++#
++#   Gradle start up script for POSIX generated by Gradle.
++#
++#   Important for running:
++#
++#   (1) You need a POSIX-compliant shell to run this script. If your /bin/sh is
++#       noncompliant, but you have some other compliant shell such as ksh or
++#       bash, then to run this script, type that shell name before the whole
++#       command line, like:
++#
++#           ksh Gradle
++#
++#       Busybox and similar reduced shells will NOT work, because this script
++#       requires all of these POSIX shell features:
++#         * functions;
++#         * expansions «$var», «${var}», «${var:-default}», «${var+SET}»,
++#           «${var#prefix}», «${var%suffix}», and «$( cmd )»;
++#         * compound commands having a testable exit status, especially «case»;
++#         * various built-in commands including «command», «set», and «ulimit».
++#
++#   Important for patching:
++#
++#   (2) This script targets any POSIX shell, so it avoids extensions provided
++#       by Bash, Ksh, etc; in particular arrays are avoided.
++#
++#       The "traditional" practice of packing multiple parameters into a
++#       space-separated string is a well documented source of bugs and security
++#       problems, so this is (mostly) avoided, by progressively accumulating
++#       options in "$@", and eventually passing that to Java.
++#
++#       Where the inherited environment variables (DEFAULT_JVM_OPTS, JAVA_OPTS,
++#       and GRADLE_OPTS) rely on word-splitting, this is performed explicitly;
++#       see the in-line comments for details.
++#
++#       There are tweaks for specific operating systems such as AIX, CygWin,
++#       Darwin, MinGW, and NonStop.
++#
++#   (3) This script is generated from the Groovy template
++#       https://github.com/gradle/gradle/blob/HEAD/subprojects/plugins/src/main/resources/org/gradle/api/internal/plugins/unixStartScript.txt
++#       within the Gradle project.
++#
++#       You can find Gradle at https://github.com/gradle/gradle/.
++#
++##############################################################################
++
++# Attempt to set APP_HOME
++
++# Resolve links: $0 may be a link
++app_path=$0
++
++# Need this for daisy-chained symlinks.
++while
++    APP_HOME=${app_path%"${app_path##*/}"}  # leaves a trailing /; empty if no leading path
++    [ -h "$app_path" ]
++do
++    ls=$( ls -ld "$app_path" )
++    link=${ls#*' -> '}
++    case $link in             #(
++      /*)   app_path=$link ;; #(
++      *)    app_path=$APP_HOME$link ;;
++    esac
++done
++
++# This is normally unused
++# shellcheck disable=SC2034
++APP_BASE_NAME=${0##*/}
++# Discard cd standard output in case $CDPATH is set (https://github.com/gradle/gradle/issues/25036)
++APP_HOME=$( cd "${APP_HOME:-./}" > /dev/null && pwd -P ) || exit
++
++# Use the maximum available, or set MAX_FD != -1 to use that value.
++MAX_FD=maximum
++
++warn () {
++    echo "$*"
++} >&2
++
++die () {
++    echo
++    echo "$*"
++    echo
++    exit 1
++} >&2
++
++# OS specific support (must be 'true' or 'false').
++cygwin=false
++msys=false
++darwin=false
++nonstop=false
++case "$( uname )" in                #(
++  CYGWIN* )         cygwin=true  ;; #(
++  Darwin* )         darwin=true  ;; #(
++  MSYS* | MINGW* )  msys=true    ;; #(
++  NONSTOP* )        nonstop=true ;;
++esac
++
++CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
++
++
++# Determine the Java command to use to start the JVM.
++if [ -n "$JAVA_HOME" ] ; then
++    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
++        # IBM's JDK on AIX uses strange locations for the executables
++        JAVACMD=$JAVA_HOME/jre/sh/java
++    else
++        JAVACMD=$JAVA_HOME/bin/java
++    fi
++    if [ ! -x "$JAVACMD" ] ; then
++        die "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME
++
++Please set the JAVA_HOME variable in your environment to match the
++location of your Java installation."
++    fi
++else
++    JAVACMD=java
++    if ! command -v java >/dev/null 2>&1
++    then
++        die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
++
++Please set the JAVA_HOME variable in your environment to match the
++location of your Java installation."
++    fi
++fi
++
++# Increase the maximum file descriptors if we can.
++if ! "$cygwin" && ! "$darwin" && ! "$nonstop" ; then
++    case $MAX_FD in #(
++      max*)
++        # In POSIX sh, ulimit -H is undefined. That's why the result is checked to see if it worked.
++        # shellcheck disable=SC2039,SC3045
++        MAX_FD=$( ulimit -H -n ) ||
++            warn "Could not query maximum file descriptor limit"
++    esac
++    case $MAX_FD in  #(
++      '' | soft) :;; #(
++      *)
++        # In POSIX sh, ulimit -n is undefined. That's why the result is checked to see if it worked.
++        # shellcheck disable=SC2039,SC3045
++        ulimit -n "$MAX_FD" ||
++            warn "Could not set maximum file descriptor limit to $MAX_FD"
++    esac
++fi
++
++# Collect all arguments for the java command, stacking in reverse order:
++#   * args from the command line
++#   * the main class name
++#   * -classpath
++#   * -D...appname settings
++#   * --module-path (only if needed)
++#   * DEFAULT_JVM_OPTS, JAVA_OPTS, and GRADLE_OPTS environment variables.
++
++# For Cygwin or MSYS, switch paths to Windows format before running java
++if "$cygwin" || "$msys" ; then
++    APP_HOME=$( cygpath --path --mixed "$APP_HOME" )
++    CLASSPATH=$( cygpath --path --mixed "$CLASSPATH" )
++
++    JAVACMD=$( cygpath --unix "$JAVACMD" )
++
++    # Now convert the arguments - kludge to limit ourselves to /bin/sh
++    for arg do
++        if
++            case $arg in                                #(
++              -*)   false ;;                            # don't mess with options #(
++              /?*)  t=${arg#/} t=/${t%%/*}              # looks like a POSIX filepath
++                    [ -e "$t" ] ;;                      #(
++              *)    false ;;
++            esac
++        then
++            arg=$( cygpath --path --ignore --mixed "$arg" )
++        fi
++        # Roll the args list around exactly as many times as the number of
++        # args, so each arg winds up back in the position where it started, but
++        # possibly modified.
++        #
++        # NB: a `for` loop captures its iteration list before it begins, so
++        # changing the positional parameters here affects neither the number of
++        # iterations, nor the values presented in `arg`.
++        shift                   # remove old arg
++        set -- "$@" "$arg"      # push replacement arg
++    done
++fi
++
++
++# Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
++DEFAULT_JVM_OPTS='-Dfile.encoding=UTF-8 "-Xmx64m" "-Xms64m"'
++
++# Collect all arguments for the java command:
++#   * DEFAULT_JVM_OPTS, JAVA_OPTS, JAVA_OPTS, and optsEnvironmentVar are not allowed to contain shell fragments,
++#     and any embedded shellness will be escaped.
++#   * For example: A user cannot expect ${Hostname} to be expanded, as it is an environment variable and will be
++#     treated as '${Hostname}' itself on the command line.
++
++set -- \
++        "-Dorg.gradle.appname=$APP_BASE_NAME" \
++        -classpath "$CLASSPATH" \
++        org.gradle.wrapper.GradleWrapperMain \
++        "$@"
++
++# Stop when "xargs" is not available.
++if ! command -v xargs >/dev/null 2>&1
++then
++    die "xargs is not available"
++fi
++
++# Use "xargs" to parse quoted args.
++#
++# With -n1 it outputs one arg per line, with the quotes and backslashes removed.
++#
++# In Bash we could simply go:
++#
++#   readarray ARGS < <( xargs -n1 <<<"$var" ) &&
++#   set -- "${ARGS[@]}" "$@"
++#
++# but POSIX shell has neither arrays nor command substitution, so instead we
++# post-process each arg (as a line of input to sed) to backslash-escape any
++# character that might be a shell metacharacter, then use eval to reverse
++# that process (while maintaining the separation between arguments), and wrap
++# the whole thing up as a single "set" statement.
++#
++# This will of course break if any of these variables contains a newline or
++# an unmatched quote.
++#
++
++eval "set -- $(
++        printf '%s\n' "$DEFAULT_JVM_OPTS $JAVA_OPTS $GRADLE_OPTS" |
++        xargs -n1 |
++        sed ' s~[^-[:alnum:]+,./:=@_]~\\&~g; ' |
++        tr '\n' ' '
++    )" '"$@"'
++
++exec "$JAVACMD" "$@"
+diff --git a/gradlew.bat b/gradlew.bat
+new file mode 100644
+index 0000000000000000000000000000000000000000..ea603b41024093d076bc2aa5ba277b706a1a3bd1
+--- /dev/null
++++ b/gradlew.bat
+@@ -0,0 +1,92 @@
++@rem
++@rem Copyright 2015 the original author or authors.
++@rem
++@rem Licensed under the Apache License, Version 2.0 (the "License");
++@rem you may not use this file except in compliance with the License.
++@rem You may obtain a copy of the License at
++@rem
++@rem      https://www.apache.org/licenses/LICENSE-2.0
++@rem
++@rem Unless required by applicable law or agreed to in writing, software
++@rem distributed under the License is distributed on an "AS IS" BASIS,
++@rem WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++@rem See the License for the specific language governing permissions and
++@rem limitations under the License.
++@rem
++
++@if "%DEBUG%"=="" @echo off
++@rem ##########################################################################
++@rem
++@rem  Gradle startup script for Windows
++@rem
++@rem ##########################################################################
++
++@rem Set local scope for the variables with windows NT shell
++if "%OS%"=="Windows_NT" setlocal
++
++set DIRNAME=%~dp0
++if "%DIRNAME%"=="" set DIRNAME=.
++@rem This is normally unused
++set APP_BASE_NAME=%~n0
++set APP_HOME=%DIRNAME%
++
++@rem Resolve any "." and ".." in APP_HOME to make it shorter.
++for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
++
++@rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
++set DEFAULT_JVM_OPTS=-Dfile.encoding=UTF-8 "-Xmx64m" "-Xms64m"
++
++@rem Find java.exe
++if defined JAVA_HOME goto findJavaFromJavaHome
++
++set JAVA_EXE=java.exe
++%JAVA_EXE% -version >NUL 2>&1
++if %ERRORLEVEL% equ 0 goto execute
++
++echo.
++echo ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
++echo.
++echo Please set the JAVA_HOME variable in your environment to match the
++echo location of your Java installation.
++
++goto fail
++
++:findJavaFromJavaHome
++set JAVA_HOME=%JAVA_HOME:"=%
++set JAVA_EXE=%JAVA_HOME%/bin/java.exe
++
++if exist "%JAVA_EXE%" goto execute
++
++echo.
++echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
++echo.
++echo Please set the JAVA_HOME variable in your environment to match the
++echo location of your Java installation.
++
++goto fail
++
++:execute
++@rem Setup the command line
++
++set CLASSPATH=%APP_HOME%\gradle\wrapper\gradle-wrapper.jar
++
++
++@rem Execute Gradle
++"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %*
++
++:end
++@rem End local scope for the variables with windows NT shell
++if %ERRORLEVEL% equ 0 goto mainEnd
++
++:fail
++rem Set variable GRADLE_EXIT_CONSOLE if you need the _script_ return code instead of
++rem the _cmd.exe /c_ return code!
++set EXIT_CODE=%ERRORLEVEL%
++if %EXIT_CODE% equ 0 set EXIT_CODE=1
++if not ""=="%GRADLE_EXIT_CONSOLE%" exit %EXIT_CODE%
++exit /b %EXIT_CODE%
++
++:mainEnd
++if "%OS%"=="Windows_NT" endlocal
++
++:omega
+diff --git a/settings.gradle.kts b/settings.gradle.kts
+new file mode 100644
+index 0000000000000000000000000000000000000000..f3b5e54982cc997d59b64d663bc2846f55a89685
+--- /dev/null
++++ b/settings.gradle.kts
+@@ -0,0 +1,18 @@
++pluginManagement {
++    repositories {
++        google()
++        mavenCentral()
++        gradlePluginPortal()
++    }
++}
++
++dependencyResolutionManagement {
++    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
++    repositories {
++        google()
++        mavenCentral()
++    }
++}
++
++rootProject.name = "SIRIMScanner"
++include(":app")

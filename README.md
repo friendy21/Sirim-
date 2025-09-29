@@ -22,6 +22,13 @@ higher. You can also build from the command line:
 ./gradlew assembleDebug
 ```
 
+## Current Implementation Status
+
+The latest build now ships with live CameraX/ML Kit scanning, biometric sign-in, encrypted credential storage, background
+WorkManager sync, and Excel/PDF/ZIP exports with ShareSheet integration. Refer to
+[`docs/gap-analysis.md`](docs/gap-analysis.md) for the smaller follow-up items (testing, CI, release hardening, advanced
+telemetry) that remain outstanding.
+
 ## System Architecture and Technical Specifications
 
 ### 1. System Architecture

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.sirim.qrscanner.core.common.DispatcherProvider
 import com.sirim.qrscanner.core.domain.model.SirimRecord
 import com.sirim.qrscanner.core.domain.usecase.SaveRecordUseCase
+import com.sirim.qrscanner.feature.scanner.SirimQrParser
 import com.sirim.qrscanner.ui.state.ScannerUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
@@ -22,12 +23,38 @@ class ScannerViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(ScannerUiState())
     val uiState: StateFlow<ScannerUiState> = _state.asStateFlow()
+    private var lastDetectedSerial: String? = null
+    private var lastDetectionTime: Instant = Instant.EPOCH
 
     fun updateDraft(record: SirimRecord) {
         _state.value = _state.value.copy(
             lastScannedRecord = record.copy(updatedAt = Instant.now()),
-            isScanning = false
+            isScanning = false,
+            errorMessage = null
         )
+    }
+
+    fun onScanResult(rawPayload: String, recognizedText: String?) {
+        val now = Instant.now()
+        if (now.minusSeconds(2).isBefore(lastDetectionTime)) {
+            return
+        }
+        val parsed = SirimQrParser.parse(rawPayload, recognizedText)
+        if (parsed != null && parsed.sirimSerialNo.isNotBlank()) {
+            if (parsed.sirimSerialNo == lastDetectedSerial) {
+                return
+            }
+            lastDetectedSerial = parsed.sirimSerialNo
+            lastDetectionTime = now
+            _state.value = _state.value.copy(
+                lastScannedRecord = parsed,
+                isScanning = false,
+                errorMessage = null
+            )
+        } else {
+            lastDetectionTime = now
+            _state.value = _state.value.copy(errorMessage = "Unable to parse QR payload")
+        }
     }
 
     fun saveRecord(record: SirimRecord) {

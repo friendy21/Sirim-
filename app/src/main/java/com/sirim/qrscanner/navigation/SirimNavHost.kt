@@ -35,7 +35,9 @@ fun SirimNavHost(navController: NavHostController = rememberNavController()) {
                     navController.navigate(SirimDestination.Dashboard.route) {
                         popUpTo(SirimDestination.Authentication.route) { inclusive = true }
                     }
-                }
+                },
+                onBiometricLogin = viewModel::loginWithStoredCredentials,
+                onBiometricFailure = viewModel::reportBiometricFailure
             )
         }
         composable(route = SirimDestination.Dashboard.route) {
@@ -62,7 +64,9 @@ fun SirimNavHost(navController: NavHostController = rememberNavController()) {
                 onBack = { navController.popBackStack() },
                 onRefresh = viewModel::refresh,
                 onDeleteRecord = viewModel::deleteRecord,
-                onQueryChange = viewModel::updateQuery
+                onQueryChange = viewModel::updateQuery,
+                onExport = viewModel::export,
+                onExportConsumed = viewModel::consumeExportedFile
             )
         }
         composable(route = SirimDestination.Scanner.route) {
@@ -75,7 +79,8 @@ fun SirimNavHost(navController: NavHostController = rememberNavController()) {
                     navController.popBackStack()
                 },
                 onCancel = { navController.popBackStack() },
-                onManualEntry = viewModel::updateDraft
+                onManualEntry = viewModel::updateDraft,
+                onScanResult = viewModel::onScanResult
             )
         }
     }

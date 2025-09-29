@@ -35,8 +35,11 @@ class AuthenticationViewModel @Inject constructor(
                 if (credentials != null) {
                     _state.value = _state.value.copy(
                         username = credentials.username,
-                        password = credentials.password
+                        password = credentials.password,
+                        hasStoredCredentials = true
                     )
+                } else {
+                    _state.value = _state.value.copy(hasStoredCredentials = false)
                 }
             }
         }
@@ -61,6 +64,10 @@ class AuthenticationViewModel @Inject constructor(
         _state.value = _state.value.copy(errorMessage = null)
     }
 
+    fun reportBiometricFailure(message: String) {
+        _state.value = _state.value.copy(errorMessage = message)
+    }
+
     fun login() {
         val credentials = UserCredentials(_state.value.username, _state.value.password)
         viewModelScope.launch(dispatcherProvider.io) {
@@ -75,8 +82,19 @@ class AuthenticationViewModel @Inject constructor(
         }
     }
 
+    fun loginWithStoredCredentials() {
+        if (!_state.value.hasStoredCredentials) {
+            _state.value = _state.value.copy(errorMessage = "Stored credentials not available")
+            return
+        }
+        login()
+    }
+
     private fun persistCredentials() {
         val credentials = UserCredentials(_state.value.username, _state.value.password)
+        if (credentials.username.isBlank() || credentials.password.isBlank()) {
+            return
+        }
         viewModelScope.launch(dispatcherProvider.io) {
             updateCachedCredentialsUseCase(credentials)
         }

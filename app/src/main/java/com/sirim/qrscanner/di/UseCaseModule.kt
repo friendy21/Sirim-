@@ -1,9 +1,11 @@
 package com.sirim.qrscanner.di
 
 import com.sirim.qrscanner.core.domain.repository.AuthenticationRepository
+import com.sirim.qrscanner.core.domain.repository.RecordExportRepository
 import com.sirim.qrscanner.core.domain.repository.SirimRecordRepository
 import com.sirim.qrscanner.core.domain.repository.SynchronizationRepository
 import com.sirim.qrscanner.core.domain.usecase.DeleteRecordUseCase
+import com.sirim.qrscanner.core.domain.usecase.ExportRecordsUseCase
 import com.sirim.qrscanner.core.domain.usecase.GetLastSynchronizationTimestampUseCase
 import com.sirim.qrscanner.core.domain.usecase.LoginUseCase
 import com.sirim.qrscanner.core.domain.usecase.LogoutUseCase
@@ -77,4 +79,8 @@ object UseCaseModule {
     @Singleton
     fun provideGetLastSynchronizationTimestampUseCase(repository: SynchronizationRepository) =
         GetLastSynchronizationTimestampUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideExportRecordsUseCase(repository: RecordExportRepository) = ExportRecordsUseCase(repository)
 }

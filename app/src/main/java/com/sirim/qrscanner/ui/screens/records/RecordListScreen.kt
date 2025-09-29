@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.IosShare
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -19,16 +21,24 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sirim.qrscanner.core.domain.model.SirimRecord
+import com.sirim.qrscanner.core.domain.repository.ExportFormat
 import com.sirim.qrscanner.ui.components.LoadingOverlay
 import com.sirim.qrscanner.ui.components.SectionHeader
 import com.sirim.qrscanner.ui.state.RecordListUiState
+import com.sirim.qrscanner.util.ShareUtils
+import java.io.File
 
 @Composable
 fun RecordListScreen(
@@ -36,9 +46,13 @@ fun RecordListScreen(
     onBack: () -> Unit,
     onRefresh: () -> Unit,
     onDeleteRecord: (SirimRecord) -> Unit,
-    onQueryChange: (String) -> Unit
+    onQueryChange: (String) -> Unit,
+    onExport: (ExportFormat) -> Unit,
+    onExportConsumed: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    var exportDialogVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         onRefresh()
@@ -50,6 +64,15 @@ fun RecordListScreen(
         }
     }
 
+    val exportedPath = state.exportedFilePath
+    val exportedMimeType = state.exportedMimeType
+    if (exportedPath != null && exportedMimeType != null) {
+        LaunchedEffect(exportedPath, exportedMimeType) {
+            ShareUtils.shareFile(context, File(exportedPath), exportedMimeType)
+            onExportConsumed()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -57,6 +80,14 @@ fun RecordListScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { exportDialogVisible = true }) {
+                        Icon(
+                            imageVector = Icons.Default.IosShare,
+                            contentDescription = "Export"
+                        )
                     }
                 }
             )
@@ -91,7 +122,17 @@ fun RecordListScreen(
         }
     }
 
-    LoadingOverlay(isVisible = state.isLoading)
+    LoadingOverlay(isVisible = state.isLoading || state.isExporting)
+
+    if (exportDialogVisible) {
+        ExportFormatDialog(
+            onDismiss = { exportDialogVisible = false },
+            onFormatSelected = {
+                exportDialogVisible = false
+                onExport(it)
+            }
+        )
+    }
 }
 
 @Composable
@@ -111,5 +152,34 @@ private fun RecordRow(record: SirimRecord, onDeleteRecord: (SirimRecord) -> Unit
                 Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
             }
         }
+    }
+}
+
+@Composable
+private fun ExportFormatDialog(
+    onDismiss: () -> Unit,
+    onFormatSelected: (ExportFormat) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {},
+        title = { Text("Export records") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                ExportActionRow("Excel (.xlsx)") { onFormatSelected(ExportFormat.EXCEL) }
+                ExportActionRow("PDF (.pdf)") { onFormatSelected(ExportFormat.PDF) }
+                ExportActionRow("ZIP (.zip)") { onFormatSelected(ExportFormat.ZIP) }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
+@Composable
+private fun ExportActionRow(label: String, onClick: () -> Unit) {
+    TextButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Text(text = label, modifier = Modifier.fillMaxWidth())
     }
 }

@@ -1,8 +1,8 @@
 package com.sirim.scanner.domain.model
 
 data class SirimRecord(
-    val id: Long? = null,
-    val sirimSerialNumber: String,
+    val id: Long = 0,
+    val sirimSerialNo: String,
     val batchNumber: String? = null,
     val brandTrademark: String? = null,
     val model: String? = null,
@@ -11,6 +11,6 @@ data class SirimRecord(
     val size: String? = null,
     val createdAt: Long,
     val updatedAt: Long,
-    val isSynced: Boolean = false,
-    val deviceId: String? = null
+    val isSynced: Boolean,
+    val deviceId: String? = null,
 )

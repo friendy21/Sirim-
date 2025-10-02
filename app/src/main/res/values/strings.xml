@@ -1,7 +1,19 @@
 <resources>
-    <string name="app_name">SIRIM Scanner</string>
-    <string name="scan_title">Scan QR Code</string>
-    <string name="records_title">Records</string>
-    <string name="export_title">Export</string>
-    <string name="request_camera_permission">Camera access is required to scan SIRIM QR codes.</string>
+    <string name="app_name">SIRIM QR Scanner</string>
+    <string name="login_title">Secure Sign-In</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="sign_in">Sign In</string>
+    <string name="register">Register</string>
+    <string name="dashboard_title">Dashboard</string>
+    <string name="scan_qr">Scan QR</string>
+    <string name="records">Records</string>
+    <string name="export">Export</string>
+    <string name="logout">Logout</string>
+    <string name="toggle_biometric">Enable biometric unlock</string>
+    <string name="search_records">Search records</string>
+    <string name="create_record">Create record</string>
+    <string name="edit_record">Edit record</string>
+    <string name="delete_record">Delete</string>
+    <string name="save">Save</string>
 </resources>
